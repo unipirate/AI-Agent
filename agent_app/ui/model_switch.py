@@ -25,6 +25,16 @@ from agent_app.errors import format_user_error
 logger = logging.getLogger(__name__)
 
 
+def _present_toplevel(window: tk.Toplevel) -> None:
+    """Ensure a Toplevel is visible (macOS hides it when the root is withdrawn)."""
+    window.update_idletasks()
+    window.deiconify()
+    window.lift()
+    window.attributes("-topmost", True)
+    window.after(200, lambda: window.attributes("-topmost", False))
+    window.focus_force()
+
+
 class ModelSwitchDialog(tk.Toplevel):
     def __init__(
         self,
@@ -44,8 +54,6 @@ class ModelSwitchDialog(tk.Toplevel):
         self.title("选择大模型")
         self.geometry("520x420")
         self.resizable(False, False)
-        self.transient(parent)
-        self.grab_set()
 
         active = store.get_active() or LlmProfile.from_preset("local_mlx")
         self.display_name_var = tk.StringVar(value=active.display_name)
@@ -61,6 +69,14 @@ class ModelSwitchDialog(tk.Toplevel):
 
         self.protocol("WM_DELETE_WINDOW", self._on_cancel)
         self.bind("<Escape>", lambda _event: self._on_cancel())
+        self._setup_modal()
+
+    def _setup_modal(self) -> None:
+        parent = self.master
+        if parent.state() != "withdrawn":
+            self.transient(parent)
+        _present_toplevel(self)
+        self.grab_set()
 
     def _build_ui(self) -> None:
         frame = ttk.Frame(self, padding=16)
@@ -235,6 +251,7 @@ def show_model_switch_dialog(
     on_apply: Callable[[LlmProfile, ProfileStore, str | None], str] | None = None,
 ) -> LlmProfile | None:
     dialog = ModelSwitchDialog(parent, store, mode=mode, on_apply=on_apply)
+    parent.update_idletasks()
     parent.wait_window(dialog)
     return dialog.result
 

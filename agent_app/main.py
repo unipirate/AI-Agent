@@ -9,6 +9,7 @@ from agent_app.core.agent import Agent
 from agent_app.llm_profiles import bootstrap_from_env, load_profile_store
 from agent_app.log_config import configure_logging
 from agent_app.ui.model_switch import show_model_switch_dialog
+from agent_app.ui.theme import APP_NAME, apply_bright_theme, center_window
 
 
 def ensure_allowed_root(path: Path) -> None:
@@ -26,12 +27,12 @@ def main() -> None:
 
     root = tk.Tk()
     root.withdraw()
+    apply_bright_theme(root)
+    root.title(APP_NAME)
 
     agent = Agent(base_settings)
 
     profile = show_model_switch_dialog(root, store, mode="startup")
-    if profile is None:
-        profile = store.get_active()
     if profile is None:
         root.destroy()
         return

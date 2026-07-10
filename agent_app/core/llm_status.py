@@ -10,12 +10,45 @@ from agent_app.config import Settings
 logger = logging.getLogger(__name__)
 
 
+def _parse_models_list(data: dict) -> list[str]:
+    return [item.get("id", "") for item in data.get("data", []) if item.get("id")]
+
+
 def fetch_server_models(base_url: str, timeout: int = 3) -> list[str]:
+    """List models advertised by the server (may include cached installs, not only loaded)."""
     base = base_url.rstrip("/")
     resp = requests.get(f"{base}/models", timeout=timeout)
     resp.raise_for_status()
-    data = resp.json()
-    return [item.get("id", "") for item in data.get("data", []) if item.get("id")]
+    return _parse_models_list(resp.json())
+
+
+def fetch_active_server_models(base_url: str, timeout: int = 3) -> list[str]:
+    """Prefer in-memory / running models; fall back to full catalog when unsupported."""
+    base = base_url.rstrip("/")
+
+    try:
+        resp = requests.get(f"{base}/models/loaded", timeout=timeout)
+        if resp.ok:
+            models = _parse_models_list(resp.json())
+            if models:
+                logger.debug("Active models from /models/loaded at %s: %d", base_url, len(models))
+                return models
+    except requests.RequestException:
+        logger.debug("No /models/loaded endpoint at %s", base_url)
+
+    root = base[: -len("/v1")] if base.endswith("/v1") else base
+    try:
+        resp = requests.get(f"{root}/api/ps", timeout=timeout)
+        if resp.ok:
+            payload = resp.json()
+            models = [item.get("name", "") for item in payload.get("models", []) if item.get("name")]
+            if models:
+                logger.debug("Active models from Ollama /api/ps at %s: %d", base_url, len(models))
+                return models
+    except requests.RequestException:
+        logger.debug("No Ollama /api/ps endpoint at %s", base_url)
+
+    return fetch_server_models(base_url, timeout=timeout)
 
 
 def resolve_local_llm(settings: Settings) -> tuple[Settings, str]:

@@ -10,7 +10,7 @@ from uuid import uuid4
 import requests
 
 from agent_app.config import Settings
-from agent_app.core.llm_status import fetch_server_models, resolve_local_llm
+from agent_app.core.llm_status import fetch_active_server_models, fetch_server_models, resolve_local_llm
 from agent_app.secrets import load_api_key, save_api_key
 
 logger = logging.getLogger(__name__)
@@ -157,6 +157,45 @@ class ProfileStore:
 
 def is_local_provider(provider_id: str) -> bool:
     return provider_id in LOCAL_PROVIDER_IDS
+
+
+@dataclass(frozen=True)
+class DiscoveredLocalModel:
+    provider_id: str
+    base_url: str
+    model_id: str
+    label: str
+
+
+def discover_running_local_models(timeout: int = 2) -> list[DiscoveredLocalModel]:
+    """Probe known local endpoints and return actively loaded models when supported."""
+    discovered: list[DiscoveredLocalModel] = []
+    for provider_id in sorted(LOCAL_PROVIDER_IDS):
+        preset = PROVIDER_PRESETS[provider_id]
+        base_url = preset.base_url
+        if not base_url:
+            continue
+        try:
+            model_ids = fetch_active_server_models(base_url, timeout=timeout)
+        except requests.RequestException:
+            logger.debug(
+                "Local LLM endpoint unavailable provider=%s url=%s",
+                provider_id,
+                base_url,
+            )
+            continue
+        service_name = preset.display_name.replace("本地 · ", "")
+        for model_id in model_ids:
+            discovered.append(
+                DiscoveredLocalModel(
+                    provider_id=provider_id,
+                    base_url=base_url,
+                    model_id=model_id,
+                    label=f"{service_name} · {model_id}",
+                )
+            )
+    discovered.sort(key=lambda item: item.label.lower())
+    return discovered
 
 
 def preset_for(provider_id: str) -> ProviderPreset:

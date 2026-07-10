@@ -9,6 +9,7 @@ from agent_app.llm_profiles import LlmProfile, ProfileStore, profile_summary
 from agent_app.models import AgentReply
 from agent_app.ui.background import BackgroundRunner
 from agent_app.ui.model_switch import ModelSwitcherBar
+from agent_app.ui.theme import APP_NAME, center_window, style_chat_text
 
 
 class AgentDesktopApp:
@@ -28,13 +29,14 @@ class AgentDesktopApp:
         self._runner = BackgroundRunner(root)
         self._busy = False
 
-        self.root.title("Local AI Agent")
+        self.root.title(APP_NAME)
         self.root.geometry("920x640")
         self.root.minsize(760, 520)
+        center_window(self.root, 920, 640)
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
         self._build_ui()
-        self._append("system", "Agent 已启动。你可以让我列目录、搜索网页，或执行待确认文件操作。")
+        self._append("system", f"{APP_NAME} 已启动。你可以让我列目录、搜索网页，或执行待确认文件操作。")
 
     def _on_close(self) -> None:
         self._runner.shutdown()
@@ -69,6 +71,7 @@ class AgentDesktopApp:
         self.switcher.pack(fill=tk.X, pady=(0, 10))
 
         self.chat = tk.Text(frame, wrap=tk.WORD, state=tk.DISABLED)
+        style_chat_text(self.chat)
         self.chat.pack(fill=tk.BOTH, expand=True)
 
         bottom = ttk.Frame(frame)

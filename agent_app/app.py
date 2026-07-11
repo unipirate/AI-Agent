@@ -205,9 +205,13 @@ class AgentDesktopApp:
         model = self.active_profile.model if self.active_profile else ""
         self._session.add_assistant_message(reply.message, model)
         self._session.save()
-        self._session_index.update_session_meta(self._session.to_meta())
+
+        old_meta = self._session_index.get_meta(self._session.session_id)
+        new_meta = self._session.to_meta()
+        self._session_index.update_session_meta(new_meta)
         self._session_index.save()
-        self.session_panel.refresh()
+        if old_meta is None or old_meta.title != new_meta.title:
+            self.session_panel.refresh()
 
         if reply.pending_action:
             self.pending_action_id = reply.pending_action.action_id
@@ -226,7 +230,7 @@ class AgentDesktopApp:
 
         self._runner.submit(
             lambda: self.agent.approve_action(action_id),
-            lambda reply: self._append("agent", reply.message),
+            self._show_agent_reply,
             on_error=lambda exc: self._append("system", format_user_error("批准动作失败。", exc)),
             on_finished=lambda: self._set_busy(False),
         )
@@ -241,7 +245,7 @@ class AgentDesktopApp:
 
         self._runner.submit(
             lambda: self.agent.reject_action(action_id),
-            lambda reply: self._append("agent", reply.message),
+            self._show_agent_reply,
             on_error=lambda exc: self._append("system", format_user_error("拒绝动作失败。", exc)),
             on_finished=lambda: self._set_busy(False),
         )

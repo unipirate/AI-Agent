@@ -86,15 +86,25 @@ class ChatSession:
     def get_history_for_llm(
         self, max_tokens: int = MAX_HISTORY_TOKENS, model: str = ""
     ) -> list[dict[str, str]]:
-        """Return recent messages that fit within *max_tokens*, for LLM consumption."""
+        """Return recent messages that fit within *max_tokens*, for LLM consumption.
+
+        Ensures alternating user/assistant roles (required by Anthropic API)
+        by merging consecutive same-role messages.
+        """
         if not self.messages:
             return []
         all_msgs: list[dict[str, str]] = []
         for m in self.messages:
             if m.role == "tool":
-                all_msgs.append({"role": "user", "content": f"[Tool: {m.tool_name}]\n{m.content}"})
+                entry = {"role": "user", "content": f"[Tool: {m.tool_name}]\n{m.content}"}
             else:
-                all_msgs.append({"role": m.role, "content": m.content})
+                entry = {"role": m.role, "content": m.content}
+
+            if all_msgs and all_msgs[-1]["role"] == entry["role"]:
+                all_msgs[-1]["content"] += "\n\n" + entry["content"]
+            else:
+                all_msgs.append(entry)
+
         return trim_history_by_tokens(all_msgs, max_tokens, model)
 
     def save(self) -> None:
@@ -223,6 +233,12 @@ class SessionIndex:
             if s.session_id == meta.session_id:
                 self.sessions[i] = meta
                 return
+
+    def get_meta(self, session_id: str) -> SessionMeta | None:
+        for s in self.sessions:
+            if s.session_id == session_id:
+                return s
+        return None
 
     def save(self) -> None:
         CONVERSATIONS_DIR.mkdir(parents=True, exist_ok=True)

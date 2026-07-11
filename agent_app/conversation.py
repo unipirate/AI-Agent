@@ -19,6 +19,7 @@ from agent_app.token_counter import (
 logger = logging.getLogger(__name__)
 
 CONVERSATIONS_DIR: Path = Path("~/.ai-agent/conversations").expanduser()
+MAX_PERSISTED_MESSAGES: int = 200
 
 
 @dataclass
@@ -111,12 +112,13 @@ class ChatSession:
     def save(self) -> None:
         CONVERSATIONS_DIR.mkdir(parents=True, exist_ok=True)
         path = CONVERSATIONS_DIR / f"{self.session_id}.json"
+        persisted = self.messages[-MAX_PERSISTED_MESSAGES:]
         data = {
             "session_id": self.session_id,
             "title": self.title,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
-            "messages": [asdict(m) for m in self.messages],
+            "messages": [asdict(m) for m in persisted],
         }
         _atomic_write_json(path, data)
 

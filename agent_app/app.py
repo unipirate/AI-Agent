@@ -203,14 +203,17 @@ class AgentDesktopApp:
 
         model = self.active_profile.model if self.active_profile else ""
         self._session.add_assistant_message(reply.message, model)
-        self._session.save()
-
-        old_meta = self._session_index.get_meta(self._session.session_id)
-        new_meta = self._session.to_meta()
-        self._session_index.update_session_meta(new_meta)
-        self._session_index.save()
-        if old_meta is None or old_meta.title != new_meta.title:
-            self.session_panel.refresh()
+        try:
+            self._session.save()
+            old_meta = self._session_index.get_meta(self._session.session_id)
+            new_meta = self._session.to_meta()
+            self._session_index.update_session_meta(new_meta)
+            self._session_index.save()
+            if old_meta is None or old_meta.title != new_meta.title:
+                self.session_panel.refresh()
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("Failed to persist session")
 
         if reply.pending_action:
             self.pending_action_id = reply.pending_action.action_id
@@ -280,6 +283,9 @@ class AgentDesktopApp:
         self._session_index.add_session(new.to_meta())
         self._session_index.save()
         self._session = new
+        self.pending_action_id = None
+        self.agent.pending_actions.clear()
+        self._set_action_buttons(False)
         self._clear_chat()
         self._append("system", "新会话已创建。")
         self.session_panel.refresh()

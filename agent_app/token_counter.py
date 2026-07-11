@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 MAX_HISTORY_TOKENS: int = 3000
 MAX_TOOL_CONTENT_CHARS: int = 8000
+_SINGLE_MSG_TOKEN_CAP: int = 1500
 
 try:
     import tiktoken
@@ -14,6 +16,12 @@ try:
     _TIKTOKEN_AVAILABLE = True
 except ImportError:
     _TIKTOKEN_AVAILABLE = False
+
+
+@lru_cache(maxsize=8)
+def _get_encoding(model: str) -> Any:
+    """Cached tiktoken encoder lookup."""
+    return tiktoken.encoding_for_model(model)
 
 
 def count_tokens(text: str, model: str = "") -> int:
@@ -24,11 +32,28 @@ def count_tokens(text: str, model: str = "") -> int:
     """
     if _TIKTOKEN_AVAILABLE and _is_tiktoken_model(model):
         try:
-            enc = tiktoken.encoding_for_model(model)
+            enc = _get_encoding(model)
             return len(enc.encode(text))
         except Exception:
             pass
     return max(1, len(text) // 4)
+
+
+def truncate_text_to_tokens(text: str, max_tokens: int, model: str = "") -> str:
+    """Truncate *text* to fit within *max_tokens*, appending ellipsis if cut."""
+    if _TIKTOKEN_AVAILABLE and _is_tiktoken_model(model):
+        try:
+            enc = _get_encoding(model)
+            token_ids = enc.encode(text)
+            if len(token_ids) <= max_tokens:
+                return text
+            return enc.decode(token_ids[:max_tokens]) + "…[截断]"
+        except Exception:
+            pass
+    char_limit = max_tokens * 4
+    if len(text) <= char_limit:
+        return text
+    return text[:char_limit] + "…[截断]"
 
 
 def trim_history_by_tokens(
@@ -39,7 +64,9 @@ def trim_history_by_tokens(
     """Return the longest recent suffix of *messages* fitting within *max_tokens*.
 
     Iterates from newest to oldest, accumulating token counts.
-    Always keeps at least the most recent message regardless of size.
+    Always keeps at least the most recent message (truncated if oversized).
+    Individual messages exceeding _SINGLE_MSG_TOKEN_CAP are truncated to
+    prevent a single long message from monopolizing the entire context window.
     """
     if not messages:
         return []
@@ -48,7 +75,14 @@ def trim_history_by_tokens(
     budget = max_tokens
 
     for msg in reversed(messages):
-        tokens = count_tokens(msg.get("content", ""), model)
+        content = msg.get("content", "")
+        tokens = count_tokens(content, model)
+
+        if tokens > _SINGLE_MSG_TOKEN_CAP:
+            content = truncate_text_to_tokens(content, _SINGLE_MSG_TOKEN_CAP, model)
+            tokens = _SINGLE_MSG_TOKEN_CAP
+            msg = {**msg, "content": content}
+
         if result and tokens > budget:
             break
         result.append(msg)

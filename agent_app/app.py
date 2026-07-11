@@ -42,7 +42,9 @@ class AgentDesktopApp:
 
         self._build_ui()
         self._replay_session()
-        self._append("system", f"{APP_NAME} 已启动。你可以让我列目录、搜索网页，或执行待确认文件操作。")
+        self._append(
+            "system", f"{APP_NAME} 已启动。你可以让我列目录、搜索网页，或执行待确认文件操作。"
+        )
 
     def _load_or_create_session(self) -> ChatSession:
         active_id = self._session_index.get_active_session_id()
@@ -137,9 +139,13 @@ class AgentDesktopApp:
 
         actions = ttk.Frame(frame)
         actions.pack(fill=tk.X, pady=(10, 0))
-        self.approve_btn = ttk.Button(actions, text="批准动作", command=self._on_approve, state=tk.DISABLED)
+        self.approve_btn = ttk.Button(
+            actions, text="批准动作", command=self._on_approve, state=tk.DISABLED
+        )
         self.approve_btn.pack(side=tk.LEFT)
-        self.reject_btn = ttk.Button(actions, text="拒绝动作", command=self._on_reject, state=tk.DISABLED)
+        self.reject_btn = ttk.Button(
+            actions, text="拒绝动作", command=self._on_reject, state=tk.DISABLED
+        )
         self.reject_btn.pack(side=tk.LEFT, padx=(8, 0))
 
     def _set_busy(self, busy: bool) -> None:
@@ -162,7 +168,9 @@ class AgentDesktopApp:
 
         self._runner.submit(
             work,
-            lambda status: self._append("system", f"已切换模型：{profile_summary(profile)}\n{status}"),
+            lambda status: self._append(
+                "system", f"已切换模型：{profile_summary(profile)}\n{status}"
+            ),
             on_error=lambda exc: self._append("system", format_user_error("切换模型失败。", exc)),
             on_finished=lambda: self._set_busy(False),
         )
@@ -213,6 +221,7 @@ class AgentDesktopApp:
                 self.session_panel.refresh()
         except Exception:
             import logging
+
             logging.getLogger(__name__).exception("Failed to persist session")
 
         if reply.pending_action:

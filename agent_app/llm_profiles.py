@@ -10,7 +10,11 @@ from uuid import uuid4
 import requests
 
 from agent_app.config import Settings
-from agent_app.core.llm_status import fetch_active_server_models, fetch_server_models, resolve_local_llm
+from agent_app.core.llm_status import (
+    fetch_active_server_models,
+    fetch_server_models,
+    resolve_local_llm,
+)
 from agent_app.secrets import load_api_key, save_api_key
 
 logger = logging.getLogger(__name__)
@@ -209,7 +213,9 @@ def resolve_api_key(profile: LlmProfile) -> str | None:
 
     preset = preset_for(profile.provider_id)
     if preset.env_key_var:
-        env_value = os.getenv(preset.env_key_var) or os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+        env_value = (
+            os.getenv(preset.env_key_var) or os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+        )
         if env_value:
             return env_value
 
@@ -234,7 +240,9 @@ def profile_to_settings(profile: LlmProfile, base: Settings | None = None) -> Se
     allowed_root = (
         base.allowed_root
         if base
-        else Path(os.getenv("AGENT_ALLOWED_ROOT", "~/Documents/AI-Agent-Sandbox")).expanduser().resolve()
+        else Path(os.getenv("AGENT_ALLOWED_ROOT", "~/Documents/AI-Agent-Sandbox"))
+        .expanduser()
+        .resolve()
     )
     tavily = base.tavily_api_key if base else os.getenv("TAVILY_API_KEY") or None
 
@@ -362,9 +370,15 @@ def apply_profile_key(profile_id: str, new_key: str | None) -> None:
         save_api_key(profile_id, new_key.strip())
 
 
-def test_profile_connection(profile: LlmProfile, api_key_override: str | None = None) -> tuple[bool, str]:
+def test_profile_connection(
+    profile: LlmProfile, api_key_override: str | None = None
+) -> tuple[bool, str]:
     preset = preset_for(profile.provider_id)
-    api_key = api_key_override.strip() if api_key_override and api_key_override.strip() else resolve_api_key(profile)
+    api_key = (
+        api_key_override.strip()
+        if api_key_override and api_key_override.strip()
+        else resolve_api_key(profile)
+    )
 
     if preset.uses_anthropic:
         if not api_key:
@@ -417,11 +431,15 @@ def test_profile_connection(profile: LlmProfile, api_key_override: str | None = 
                 if model_ids:
                     return True, f"已连接，可用模型: {', '.join(model_ids[:5])}"
             except requests.RequestException:
-                logger.warning("GET /models failed for %s; falling back to completion probe", base_url)
+                logger.warning(
+                    "GET /models failed for %s; falling back to completion probe", base_url
+                )
         else:
             client = OpenAI(api_key=api_key)
 
-        model = profile.model or (preset.default_models[0] if preset.default_models else "gpt-4o-mini")
+        model = profile.model or (
+            preset.default_models[0] if preset.default_models else "gpt-4o-mini"
+        )
         client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": "ping"}],

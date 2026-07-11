@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import logging
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import ttk
-from typing import Callable
 
+from agent_app.errors import format_user_error
 from agent_app.llm_profiles import (
     DiscoveredLocalModel,
     LlmProfile,
@@ -19,7 +20,6 @@ from agent_app.llm_profiles import (
 )
 from agent_app.secrets import load_api_key, mask_api_key
 from agent_app.ui.background import BackgroundRunner
-from agent_app.errors import format_user_error
 from agent_app.ui.theme import APP_NAME, apply_bright_theme, center_window
 
 logger = logging.getLogger(__name__)
@@ -179,7 +179,9 @@ class ModelSwitchDialog(tk.Toplevel):
         self._base_url_frame = ttk.Frame(form)
         self._base_url_frame.grid(row=1, column=0, sticky=tk.EW, pady=(0, 10))
         ttk.Label(self._base_url_frame, text="Base URL").pack(anchor=tk.W)
-        self.base_url_entry = ttk.Entry(self._base_url_frame, textvariable=self.base_url_var, width=44)
+        self.base_url_entry = ttk.Entry(
+            self._base_url_frame, textvariable=self.base_url_var, width=44
+        )
         self.base_url_entry.pack(fill=tk.X, expand=True)
 
         self._model_frame = ttk.Frame(form)
@@ -188,7 +190,9 @@ class ModelSwitchDialog(tk.Toplevel):
         model_header.pack(fill=tk.X)
         self._model_label = ttk.Label(model_header, text="Model")
         self._model_label.pack(side=tk.LEFT, anchor=tk.W)
-        self.rescan_btn = ttk.Button(model_header, text="重新扫描", command=self._discover_local_models)
+        self.rescan_btn = ttk.Button(
+            model_header, text="重新扫描", command=self._discover_local_models
+        )
         self.rescan_btn.pack(side=tk.RIGHT)
         self.model_combo = ttk.Combobox(self._model_frame, textvariable=self.model_var, width=42)
         self.model_combo.pack(fill=tk.X, expand=True)
@@ -215,9 +219,9 @@ class ModelSwitchDialog(tk.Toplevel):
         ttk.Button(buttons, text="取消", command=self._on_cancel).pack(side=tk.RIGHT, padx=(8, 0))
 
         primary_text = "保存并继续" if self.mode == "startup" else "应用"
-        ttk.Button(buttons, text=primary_text, style="Accent.TButton", command=self._on_confirm).pack(
-            side=tk.RIGHT
-        )
+        ttk.Button(
+            buttons, text=primary_text, style="Accent.TButton", command=self._on_confirm
+        ).pack(side=tk.RIGHT)
 
     def _show_picker(self) -> None:
         self._config_frame.pack_forget()

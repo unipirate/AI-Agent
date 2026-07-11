@@ -35,7 +35,7 @@ Rules:
 
 
 class Planner(Protocol):
-    def plan(self, user_text: str) -> Plan: ...
+    def plan(self, user_text: str, history: list[dict[str, str]] | None = None) -> Plan: ...
 
     def update_settings(self, settings: Settings) -> None: ...
 
@@ -116,17 +116,19 @@ class OpenAICompatPlanner:
         self._settings = settings
         self._client = self._build_client(settings)
 
-    def plan(self, user_text: str) -> Plan:
+    def plan(self, user_text: str, history: list[dict[str, str]] | None = None) -> Plan:
         if not self._client:
             return _rule_based_plan(user_text)
 
         try:
+            messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+            if history:
+                messages.extend(history)
+            messages.append({"role": "user", "content": user_text})
+
             response = self._client.chat.completions.create(
                 model=self._settings.llm_model,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_text},
-                ],
+                messages=messages,
                 temperature=0,
             )
         except Exception as exc:
@@ -159,16 +161,21 @@ class AnthropicPlanner:
         self._settings = settings
         self._client = self._build_client(settings)
 
-    def plan(self, user_text: str) -> Plan:
+    def plan(self, user_text: str, history: list[dict[str, str]] | None = None) -> Plan:
         if not self._client:
             return _rule_based_plan(user_text)
 
         try:
+            messages: list[dict[str, str]] = []
+            if history:
+                messages.extend(history)
+            messages.append({"role": "user", "content": user_text})
+
             response = self._client.messages.create(
                 model=self._settings.llm_model or "claude-sonnet-4-20250514",
                 max_tokens=1024,
                 system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_text}],
+                messages=messages,
             )
         except Exception:
             logger.exception("Claude call failed")
@@ -207,5 +214,5 @@ class LLMPlanner:
         else:
             self._delegate.update_settings(settings)
 
-    def plan(self, user_text: str) -> Plan:
-        return self._delegate.plan(user_text)
+    def plan(self, user_text: str, history: list[dict[str, str]] | None = None) -> Plan:
+        return self._delegate.plan(user_text, history)

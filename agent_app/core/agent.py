@@ -29,9 +29,9 @@ class Agent:
         logger.info("Applied LLM profile provider=%s model=%s", profile.provider_id, settings.llm_model)
         return message
 
-    def handle_user_message(self, user_text: str) -> AgentReply:
+    def handle_user_message(self, user_text: str, history: list[dict[str, str]] | None = None) -> AgentReply:
         logger.info("User message received (%d chars)", len(user_text))
-        plan = self.planner.plan(user_text)
+        plan = self.planner.plan(user_text, history)
         return self._execute_plan(plan)
 
     def approve_action(self, action_id: str) -> AgentReply:

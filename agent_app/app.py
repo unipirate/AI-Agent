@@ -187,13 +187,12 @@ class AgentDesktopApp:
         self._set_action_buttons(False)
 
         model = self.active_profile.model if self.active_profile else ""
+        # Capture history BEFORE adding current message to avoid duplication
+        history_for_llm = self._session.get_history_for_llm(model=model) or None
         self._session.add_user_message(text, model)
-        history = self._session.get_history_for_llm(model=model)
-        # Exclude the last message (current user input) from history since agent will see it as user_text
-        history_for_llm = history[:-1] if history else None
 
         self._runner.submit(
-            lambda: self.agent.handle_user_message(text, history_for_llm or None),
+            lambda: self.agent.handle_user_message(text, history_for_llm),
             self._show_agent_reply,
             on_error=lambda exc: self._append("system", format_user_error("处理消息失败。", exc)),
             on_finished=lambda: self._set_busy(False),
@@ -264,6 +263,9 @@ class AgentDesktopApp:
             self._append("system", "加载会话失败。")
             return
         self._session = loaded
+        self.pending_action_id = None
+        self.agent.pending_actions.clear()
+        self._set_action_buttons(False)
         self._clear_chat()
         self._replay_session()
         self.session_panel.set_active(session_id)

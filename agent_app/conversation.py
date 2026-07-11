@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import tempfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -117,10 +118,7 @@ class ChatSession:
             "updated_at": self.updated_at,
             "messages": [asdict(m) for m in self.messages],
         }
-        try:
-            path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-        except OSError:
-            logger.exception("Failed to save session %s", self.session_id)
+        _atomic_write_json(path, data)
 
     def rename(self, new_title: str) -> None:
         self.title = new_title
@@ -247,10 +245,7 @@ class SessionIndex:
             "active_session_id": self.active_session_id,
             "sessions": [asdict(s) for s in self.sessions],
         }
-        try:
-            path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-        except OSError:
-            logger.exception("Failed to save session index")
+        _atomic_write_json(path, data)
 
     @classmethod
     def load(cls) -> SessionIndex:
@@ -276,6 +271,23 @@ class SessionIndex:
         except (json.JSONDecodeError, KeyError, OSError):
             logger.exception("Failed to load session index")
             return cls()
+
+
+def _atomic_write_json(path: Path, data: Any) -> None:
+    """Write JSON to *path* atomically via temp file + rename."""
+    try:
+        fd, tmp_path = tempfile.mkstemp(
+            dir=path.parent, prefix=".as_tmp_", suffix=".json"
+        )
+        try:
+            with open(fd, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            Path(tmp_path).replace(path)
+        except BaseException:
+            Path(tmp_path).unlink(missing_ok=True)
+            raise
+    except OSError:
+        logger.exception("Failed to write %s", path)
 
 
 def _now_iso() -> str:

@@ -168,7 +168,13 @@ class AnthropicPlanner:
         try:
             messages: list[dict[str, str]] = []
             if history:
-                messages.extend(history)
+                # Anthropic requires messages to start with role="user";
+                # drop any leading assistant messages from trimmed history
+                start = next(
+                    (i for i, m in enumerate(history) if m["role"] == "user"),
+                    len(history),
+                )
+                messages.extend(history[start:])
             messages.append({"role": "user", "content": user_text})
 
             response = self._client.messages.create(

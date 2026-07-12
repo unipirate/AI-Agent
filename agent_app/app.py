@@ -191,18 +191,59 @@ class AgentDesktopApp:
         history_for_llm = self._session.get_history_for_llm(model=model) or None
         self._session.add_user_message(text, model)
 
-        self._runner.submit(
-            lambda: self.agent.handle_user_message(text, history_for_llm),
-            self._show_agent_reply,
-            on_error=lambda exc: self._append("system", format_user_error("处理消息失败。", exc)),
+        self._append_stream_start("agent")
+
+        self._runner.submit_streaming(
+            lambda: self.agent.handle_user_message_stream(text, history_for_llm),
+            self._append_stream_chunk,
+            self._on_stream_success,
+            on_error=self._handle_stream_error,
             on_finished=lambda: self._set_busy(False),
         )
 
+    def _on_stream_success(self, reply: AgentReply) -> None:
+        """Handle the final AgentReply after streaming completes."""
+        self._append_stream_end()
+
+        model = self.active_profile.model if self.active_profile else ""
+        if reply.tool_name:
+            self._session.add_tool_message(reply.tool_name, reply.message, model)
+        else:
+            self._session.add_assistant_message(reply.message, model)
+
+        try:
+            self._session.save()
+            old_meta = self._session_index.get_meta(self._session.session_id)
+            new_meta = self._session.to_meta()
+            self._session_index.update_session_meta(new_meta)
+            self._session_index.save()
+            if old_meta is None or old_meta.title != new_meta.title:
+                self.session_panel.refresh()
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("Failed to persist session")
+
+        if reply.pending_action:
+            self.pending_action_id = reply.pending_action.action_id
+            self._set_action_buttons(True)
+        else:
+            self.pending_action_id = None
+            self._set_action_buttons(False)
+
+    def _handle_stream_error(self, exc: Exception) -> None:
+        """Clean up UI state when streaming fails mid-way."""
+        self._append_stream_end()
+        self._append("system", format_user_error("处理消息失败。", exc))
+
     def _show_agent_reply(self, reply: AgentReply) -> None:
+        """Legacy non-streaming reply handler (used by approve/reject actions)."""
         self._append("agent", reply.message)
 
         model = self.active_profile.model if self.active_profile else ""
-        self._session.add_assistant_message(reply.message, model)
+        if reply.tool_name:
+            self._session.add_tool_message(reply.tool_name, reply.message, model)
+        else:
+            self._session.add_assistant_message(reply.message, model)
         try:
             self._session.save()
             old_meta = self._session_index.get_meta(self._session.session_id)
@@ -325,5 +366,24 @@ class AgentDesktopApp:
     def _append(self, role: str, content: str) -> None:
         self.chat.configure(state=tk.NORMAL)
         self.chat.insert(tk.END, f"[{role}] {content}\n\n")
+        self.chat.see(tk.END)
+        self.chat.configure(state=tk.DISABLED)
+
+    # ------ Streaming UI helpers ------
+
+    def _append_stream_start(self, role: str) -> None:
+        """Begin a streaming message: insert role prefix and leave widget editable."""
+        self.chat.configure(state=tk.NORMAL)
+        self.chat.insert(tk.END, f"[{role}] ")
+        self.chat.see(tk.END)
+
+    def _append_stream_chunk(self, text: str) -> None:
+        """Append incremental text during streaming (called on UI thread via poll)."""
+        self.chat.insert(tk.END, text)
+        self.chat.see(tk.END)
+
+    def _append_stream_end(self) -> None:
+        """Finalize a streaming message: add trailing newlines and lock widget."""
+        self.chat.insert(tk.END, "\n\n")
         self.chat.see(tk.END)
         self.chat.configure(state=tk.DISABLED)

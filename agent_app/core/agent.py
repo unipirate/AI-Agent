@@ -26,10 +26,14 @@ class Agent:
         settings, message = resolve_profile_llm(profile, self.settings)
         self.settings = settings
         self.planner.update_settings(settings)
-        logger.info("Applied LLM profile provider=%s model=%s", profile.provider_id, settings.llm_model)
+        logger.info(
+            "Applied LLM profile provider=%s model=%s", profile.provider_id, settings.llm_model
+        )
         return message
 
-    def handle_user_message(self, user_text: str, history: list[dict[str, str]] | None = None) -> AgentReply:
+    def handle_user_message(
+        self, user_text: str, history: list[dict[str, str]] | None = None
+    ) -> AgentReply:
         logger.info("User message received (%d chars)", len(user_text))
         plan = self.planner.plan(user_text, history)
         return self._execute_plan(plan)
@@ -61,7 +65,8 @@ class Agent:
                     args=plan.tool_args,
                 )
                 self.pending_actions[action.action_id] = action
-                details = f"{action.description}\n工具: {action.tool_name}\n参数: {asdict(action)['args']}"
+                action_args = asdict(action)["args"]
+                details = f"{action.description}\n工具: {action.tool_name}\n参数: {action_args}"
                 return AgentReply(
                     message=f"该操作需要确认：\n{details}",
                     pending_action=action,
@@ -72,12 +77,14 @@ class Agent:
 
         return AgentReply("我没能识别到可执行动作，请换一种描述试试。")
 
-    def _run_tool(self, tool_name: str, args: dict) -> str:
+    def _run_tool(self, tool_name: str, args: dict[str, object]) -> str:
         logger.info("Running tool=%s args=%s", tool_name, args)
         if tool_name == "list_files":
             path = str(args.get("path", "."))
-            max_items = int(args.get("max_items", 50))
-            return list_files(allowed_root=self.settings.allowed_root, path=path, max_items=max_items)
+            max_items = int(str(args.get("max_items", 50)))
+            return list_files(
+                allowed_root=self.settings.allowed_root, path=path, max_items=max_items
+            )
 
         if tool_name == "move_file":
             src = str(args.get("src", ""))
@@ -86,7 +93,7 @@ class Agent:
 
         if tool_name == "search_web":
             query = str(args.get("query", "")).strip()
-            max_results = int(args.get("max_results", 5))
+            max_results = int(str(args.get("max_results", 5)))
             return search_web(
                 tavily_api_key=self.settings.tavily_api_key,
                 query=query,

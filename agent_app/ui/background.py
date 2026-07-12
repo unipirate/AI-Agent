@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 import tkinter as tk
+from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 T = TypeVar("T")
 

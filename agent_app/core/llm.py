@@ -5,11 +5,10 @@ import logging
 import re
 from typing import Any, Protocol
 
-from openai import OpenAI
-
 from agent_app.config import Settings
 from agent_app.llm_profiles import preset_for
 from agent_app.models import Plan
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -128,10 +127,10 @@ class OpenAICompatPlanner:
 
             response = self._client.chat.completions.create(
                 model=self._settings.llm_model,
-                messages=messages,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=0,
             )
-        except Exception as exc:
+        except Exception:
             label = _provider_label(self._settings)
             logger.exception("LLM call failed provider=%s", label)
             hint = (

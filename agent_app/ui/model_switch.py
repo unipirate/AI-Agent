@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import logging
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import ttk
-from typing import Callable
 
+from agent_app.errors import format_user_error
 from agent_app.llm_profiles import (
     DiscoveredLocalModel,
     LlmProfile,
@@ -19,7 +20,6 @@ from agent_app.llm_profiles import (
 )
 from agent_app.secrets import load_api_key, mask_api_key
 from agent_app.ui.background import BackgroundRunner
-from agent_app.errors import format_user_error
 from agent_app.ui.theme import APP_NAME, apply_bright_theme, center_window
 
 logger = logging.getLogger(__name__)
@@ -79,7 +79,8 @@ class ModelSwitchDialog(tk.Toplevel):
         self.mode = mode
         self.on_apply = on_apply
         self.result: LlmProfile | None = None
-        self._profile_id = store.get_active().id if store.get_active() else None
+        _active = store.get_active()
+        self._profile_id = _active.id if _active else None
         self._entry_key = ""
         self._active_provider_id = "local_mlx"
         self._local_options: dict[str, DiscoveredLocalModel] = {}
@@ -115,7 +116,7 @@ class ModelSwitchDialog(tk.Toplevel):
 
     def _setup_modal(self) -> None:
         parent = self.master
-        if parent.state() != "withdrawn":
+        if isinstance(parent, (tk.Tk, tk.Toplevel)) and parent.state() != "withdrawn":
             self.transient(parent)
         _present_toplevel(self)
         self.grab_set()
@@ -127,7 +128,7 @@ class ModelSwitchDialog(tk.Toplevel):
 
         active = self.store.get_active()
         current_key = _entry_key_for_profile(active) if active else None
-        if current_key:
+        if current_key and active:
             ttk.Label(
                 self._picker_frame,
                 text=f"当前：{profile_summary(active)}",
@@ -145,7 +146,7 @@ class ModelSwitchDialog(tk.Toplevel):
             btn = ttk.Button(
                 grid,
                 text=button_label,
-                command=lambda key=entry_key: self._show_config(key),
+                command=lambda key=entry_key: self._show_config(key),  # type: ignore[misc]
                 width=22,
             )
             btn.grid(row=row, column=col, padx=6, pady=6, sticky=tk.EW)
@@ -179,7 +180,9 @@ class ModelSwitchDialog(tk.Toplevel):
         self._base_url_frame = ttk.Frame(form)
         self._base_url_frame.grid(row=1, column=0, sticky=tk.EW, pady=(0, 10))
         ttk.Label(self._base_url_frame, text="Base URL").pack(anchor=tk.W)
-        self.base_url_entry = ttk.Entry(self._base_url_frame, textvariable=self.base_url_var, width=44)
+        self.base_url_entry = ttk.Entry(
+            self._base_url_frame, textvariable=self.base_url_var, width=44
+        )
         self.base_url_entry.pack(fill=tk.X, expand=True)
 
         self._model_frame = ttk.Frame(form)
@@ -188,7 +191,9 @@ class ModelSwitchDialog(tk.Toplevel):
         model_header.pack(fill=tk.X)
         self._model_label = ttk.Label(model_header, text="Model")
         self._model_label.pack(side=tk.LEFT, anchor=tk.W)
-        self.rescan_btn = ttk.Button(model_header, text="重新扫描", command=self._discover_local_models)
+        self.rescan_btn = ttk.Button(
+            model_header, text="重新扫描", command=self._discover_local_models
+        )
         self.rescan_btn.pack(side=tk.RIGHT)
         self.model_combo = ttk.Combobox(self._model_frame, textvariable=self.model_var, width=42)
         self.model_combo.pack(fill=tk.X, expand=True)
@@ -215,9 +220,9 @@ class ModelSwitchDialog(tk.Toplevel):
         ttk.Button(buttons, text="取消", command=self._on_cancel).pack(side=tk.RIGHT, padx=(8, 0))
 
         primary_text = "保存并继续" if self.mode == "startup" else "应用"
-        ttk.Button(buttons, text=primary_text, style="Accent.TButton", command=self._on_confirm).pack(
-            side=tk.RIGHT
-        )
+        ttk.Button(
+            buttons, text=primary_text, style="Accent.TButton", command=self._on_confirm
+        ).pack(side=tk.RIGHT)
 
     def _show_picker(self) -> None:
         self._config_frame.pack_forget()

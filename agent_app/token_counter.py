@@ -47,7 +47,7 @@ def truncate_text_to_tokens(text: str, max_tokens: int, model: str = "") -> str:
             token_ids = enc.encode(text)
             if len(token_ids) <= max_tokens:
                 return text
-            return enc.decode(token_ids[:max_tokens]) + "…[截断]"
+            return enc.decode(token_ids[:max_tokens]) + "…[截断]"  # type: ignore[no-any-return]
         except Exception:  # noqa: S110
             pass
     char_limit = max_tokens * 4

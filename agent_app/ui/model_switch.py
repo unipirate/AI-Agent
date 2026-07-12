@@ -79,7 +79,8 @@ class ModelSwitchDialog(tk.Toplevel):
         self.mode = mode
         self.on_apply = on_apply
         self.result: LlmProfile | None = None
-        self._profile_id = store.get_active().id if store.get_active() else None
+        _active = store.get_active()
+        self._profile_id = _active.id if _active else None
         self._entry_key = ""
         self._active_provider_id = "local_mlx"
         self._local_options: dict[str, DiscoveredLocalModel] = {}
@@ -115,7 +116,7 @@ class ModelSwitchDialog(tk.Toplevel):
 
     def _setup_modal(self) -> None:
         parent = self.master
-        if parent.state() != "withdrawn":
+        if isinstance(parent, (tk.Tk, tk.Toplevel)) and parent.state() != "withdrawn":
             self.transient(parent)
         _present_toplevel(self)
         self.grab_set()
@@ -127,7 +128,7 @@ class ModelSwitchDialog(tk.Toplevel):
 
         active = self.store.get_active()
         current_key = _entry_key_for_profile(active) if active else None
-        if current_key:
+        if current_key and active:
             ttk.Label(
                 self._picker_frame,
                 text=f"当前：{profile_summary(active)}",
@@ -145,7 +146,7 @@ class ModelSwitchDialog(tk.Toplevel):
             btn = ttk.Button(
                 grid,
                 text=button_label,
-                command=lambda key=entry_key: self._show_config(key),
+                command=lambda key=entry_key: self._show_config(key),  # type: ignore[misc]
                 width=22,
             )
             btn.grid(row=row, column=col, padx=6, pady=6, sticky=tk.EW)

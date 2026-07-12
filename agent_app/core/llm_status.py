@@ -9,8 +9,11 @@ from agent_app.config import Settings
 logger = logging.getLogger(__name__)
 
 
-def _parse_models_list(data: dict) -> list[str]:
-    return [item.get("id", "") for item in data.get("data", []) if item.get("id")]
+def _parse_models_list(data: dict[str, object]) -> list[str]:
+    items = data.get("data", [])
+    if not isinstance(items, list):
+        return []
+    return [item.get("id", "") for item in items if isinstance(item, dict) and item.get("id")]
 
 
 def fetch_server_models(base_url: str, timeout: int = 3) -> list[str]:

@@ -127,7 +127,7 @@ class OpenAICompatPlanner:
 
             response = self._client.chat.completions.create(
                 model=self._settings.llm_model,
-                messages=messages,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=0,
             )
         except Exception:

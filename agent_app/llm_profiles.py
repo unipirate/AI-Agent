@@ -128,13 +128,13 @@ class LlmProfile:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> LlmProfile:
+    def from_dict(cls, data: dict[str, object]) -> LlmProfile:
         return cls(
-            id=data["id"],
-            provider_id=data["provider_id"],
-            display_name=data["display_name"],
-            base_url=data.get("base_url"),
-            model=data.get("model", ""),
+            id=str(data["id"]),
+            provider_id=str(data["provider_id"]),
+            display_name=str(data["display_name"]),
+            base_url=str(data["base_url"]) if data.get("base_url") else None,
+            model=str(data.get("model", "")),
         )
 
 
@@ -338,7 +338,7 @@ def draft_profile(
     model: str,
 ) -> LlmProfile:
     preset = preset_for(provider_id)
-    resolved_base_url = base_url.strip() or (preset.base_url or "")
+    resolved_base_url: str | None = base_url.strip() or (preset.base_url or "")
     if provider_id != "custom" and not is_local_provider(provider_id) and not preset.uses_anthropic:
         resolved_base_url = preset.base_url or ""
     if preset.uses_anthropic:
@@ -424,8 +424,9 @@ def test_profile_connection(
     try:
         from openai import OpenAI
 
+        openai_client: OpenAI
         if base_url:
-            client = OpenAI(base_url=base_url, api_key=api_key or "local")
+            openai_client = OpenAI(base_url=base_url, api_key=api_key or "local")
             try:
                 model_ids = fetch_server_models(base_url)
                 if model_ids:
@@ -435,12 +436,12 @@ def test_profile_connection(
                     "GET /models failed for %s; falling back to completion probe", base_url
                 )
         else:
-            client = OpenAI(api_key=api_key)
+            openai_client = OpenAI(api_key=api_key)
 
         model = profile.model or (
             preset.default_models[0] if preset.default_models else "gpt-4o-mini"
         )
-        client.chat.completions.create(
+        openai_client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": "ping"}],
             max_tokens=1,

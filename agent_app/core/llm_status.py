@@ -32,9 +32,7 @@ def fetch_active_server_models(base_url: str, timeout: int = 3) -> list[str]:
         if resp.ok:
             models = _parse_models_list(resp.json())
             if models:
-                logger.debug(
-                    "Active models from /models/loaded at %s: %d", base_url, len(models)
-                )
+                logger.debug("Active models from /models/loaded at %s: %d", base_url, len(models))
                 return models
     except requests.RequestException:
         logger.debug("No /models/loaded endpoint at %s", base_url)
@@ -45,14 +43,10 @@ def fetch_active_server_models(base_url: str, timeout: int = 3) -> list[str]:
         if resp.ok:
             payload = resp.json()
             models = [
-                item.get("name", "")
-                for item in payload.get("models", [])
-                if item.get("name")
+                item.get("name", "") for item in payload.get("models", []) if item.get("name")
             ]
             if models:
-                logger.debug(
-                    "Active models from Ollama /api/ps at %s: %d", base_url, len(models)
-                )
+                logger.debug("Active models from Ollama /api/ps at %s: %d", base_url, len(models))
                 return models
     except requests.RequestException:
         logger.debug("No Ollama /api/ps endpoint at %s", base_url)
@@ -84,8 +78,7 @@ def resolve_local_llm(settings: Settings) -> tuple[Settings, str]:
         if configured and configured != active:
             resolved = replace(settings, llm_model=active)
             return resolved, (
-                f"已自动切换到当前运行的模型: {active}"
-                f"（配置中为 {configured}，换模型后无需改配置）"
+                f"已自动切换到当前运行的模型: {active}（配置中为 {configured}，换模型后无需改配置）"
             )
         resolved = replace(settings, llm_model=active)
         return resolved, f"已连接本地 LLM，当前模型: {active}"

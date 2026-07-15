@@ -19,9 +19,7 @@ class BackgroundRunner:
 
     def __init__(self, root: tk.Misc) -> None:
         self._root = root
-        self._executor = ThreadPoolExecutor(
-            max_workers=1, thread_name_prefix="agent-worker"
-        )
+        self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agent-worker")
 
     def submit(
         self,

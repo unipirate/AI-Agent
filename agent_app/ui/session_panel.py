@@ -64,9 +64,7 @@ class SessionPanel(ttk.Frame):
             highlightthickness=0,
             width=200,
         )
-        scrollbar = ttk.Scrollbar(
-            container, orient=tk.VERTICAL, command=self._canvas.yview
-        )
+        scrollbar = ttk.Scrollbar(container, orient=tk.VERTICAL, command=self._canvas.yview)
         self._scrollable = ttk.Frame(self._canvas)
 
         self._scrollable.bind(

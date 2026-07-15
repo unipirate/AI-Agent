@@ -91,9 +91,7 @@ class AgentDesktopApp:
         self._runner.submit(
             lambda: self.agent.apply_llm_profile(profile),
             self.show_llm_status,
-            on_error=lambda exc: self._append(
-                "system", format_user_error("连接模型失败。", exc)
-            ),
+            on_error=lambda exc: self._append("system", format_user_error("连接模型失败。", exc)),
             on_finished=lambda: self._set_busy(False),
         )
 
@@ -174,9 +172,7 @@ class AgentDesktopApp:
             lambda status: self._append(
                 "system", f"已切换模型：{profile_summary(profile)}\n{status}"
             ),
-            on_error=lambda exc: self._append(
-                "system", format_user_error("切换模型失败。", exc)
-            ),
+            on_error=lambda exc: self._append("system", format_user_error("切换模型失败。", exc)),
             on_finished=lambda: self._set_busy(False),
         )
 
@@ -289,9 +285,7 @@ class AgentDesktopApp:
         self._runner.submit(
             lambda: self.agent.approve_action(action_id),
             self._show_agent_reply,
-            on_error=lambda exc: self._append(
-                "system", format_user_error("批准动作失败。", exc)
-            ),
+            on_error=lambda exc: self._append("system", format_user_error("批准动作失败。", exc)),
             on_finished=lambda: self._set_busy(False),
         )
 
@@ -306,9 +300,7 @@ class AgentDesktopApp:
         self._runner.submit(
             lambda: self.agent.reject_action(action_id),
             self._show_agent_reply,
-            on_error=lambda exc: self._append(
-                "system", format_user_error("拒绝动作失败。", exc)
-            ),
+            on_error=lambda exc: self._append("system", format_user_error("拒绝动作失败。", exc)),
             on_finished=lambda: self._set_busy(False),
         )
 

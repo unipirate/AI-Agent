@@ -70,9 +70,7 @@ class Agent:
                         chunk_type="tool_status",
                     )
 
-                logger.debug(
-                    "yield final AgentReply, message len=%d", len(reply.message)
-                )
+                logger.debug("yield final AgentReply, message len=%d", len(reply.message))
                 yield reply
 
     def approve_action(self, action_id: str) -> AgentReply:

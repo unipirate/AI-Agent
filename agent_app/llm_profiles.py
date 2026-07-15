@@ -215,9 +215,7 @@ def resolve_api_key(profile: LlmProfile) -> str | None:
     preset = preset_for(profile.provider_id)
     if preset.env_key_var:
         env_value = (
-            os.getenv(preset.env_key_var)
-            or os.getenv("LLM_API_KEY")
-            or os.getenv("OPENAI_API_KEY")
+            os.getenv(preset.env_key_var) or os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
         )
         if env_value:
             return env_value
@@ -284,9 +282,7 @@ def save_profile_store(store: ProfileStore) -> None:
         "active_profile_id": store.active_profile_id,
         "profiles": [profile.to_dict() for profile in store.profiles],
     }
-    PROFILES_PATH.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    PROFILES_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _infer_local_provider(base_url: str) -> str:
@@ -344,11 +340,7 @@ def draft_profile(
 ) -> LlmProfile:
     preset = preset_for(provider_id)
     resolved_base_url: str | None = base_url.strip() or (preset.base_url or "")
-    if (
-        provider_id != "custom"
-        and not is_local_provider(provider_id)
-        and not preset.uses_anthropic
-    ):
+    if provider_id != "custom" and not is_local_provider(provider_id) and not preset.uses_anthropic:
         resolved_base_url = preset.base_url or ""
     if preset.uses_anthropic:
         resolved_base_url = None
@@ -460,9 +452,7 @@ def test_profile_connection(
         )
         return True, f"已连接，模型: {model}"
     except Exception:
-        logger.exception(
-            "Cloud LLM connection test failed provider=%s", profile.provider_id
-        )
+        logger.exception("Cloud LLM connection test failed provider=%s", profile.provider_id)
         return False, "连接失败，请检查 API Key、base_url 与网络。"
 
 
@@ -478,7 +468,5 @@ def resolve_profile_llm(profile: LlmProfile, base: Settings) -> tuple[Settings, 
         return settings, "Claude 未配置 API Key，请在设置中填写。"
     if not settings.llm_api_key:
         return settings, f"{preset.display_name} 未配置 API Key，将使用规则模式。"
-    model = settings.llm_model or (
-        preset.default_models[0] if preset.default_models else ""
-    )
+    model = settings.llm_model or (preset.default_models[0] if preset.default_models else "")
     return settings, f"已选择 {preset.display_name}，模型: {model or '默认'}"

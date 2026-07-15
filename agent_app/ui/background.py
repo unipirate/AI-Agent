@@ -5,7 +5,7 @@ import queue
 import tkinter as tk
 from collections.abc import Generator
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import TypeVar
+from typing import Callable, TypeVar
 
 from agent_app.models import AgentReply, StreamChunk
 
@@ -19,9 +19,7 @@ class BackgroundRunner:
 
     def __init__(self, root: tk.Misc) -> None:
         self._root = root
-        self._executor = ThreadPoolExecutor(
-            max_workers=1, thread_name_prefix="agent-worker"
-        )
+        self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agent-worker")
 
     def submit(
         self,

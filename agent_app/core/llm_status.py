@@ -5,7 +5,6 @@ from dataclasses import replace
 from typing import Any
 
 import requests
-
 from agent_app.config import Settings
 
 logger = logging.getLogger(__name__)

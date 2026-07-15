@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import logging
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import ttk
-from typing import Callable
 
+from agent_app.errors import format_user_error
 from agent_app.llm_profiles import (
     DiscoveredLocalModel,
     LlmProfile,
@@ -19,7 +20,6 @@ from agent_app.llm_profiles import (
 )
 from agent_app.secrets import load_api_key, mask_api_key
 from agent_app.ui.background import BackgroundRunner
-from agent_app.errors import format_user_error
 from agent_app.ui.theme import APP_NAME, apply_bright_theme, center_window
 
 logger = logging.getLogger(__name__)

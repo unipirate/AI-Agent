@@ -20,6 +20,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "agent_app/tools/*" = ["S108"]  # tmp path usage in tools is sandboxed
 "agent_app/llm_profiles.py" = ["C901"]  # complex but stable functions
+"agent_app/core/llm.py" = ["C901"]  # streaming planners are inherently complex
+"agent_app/ui/background.py" = ["C901"]  # streaming poll loop is inherently complex
 
 [tool.ruff.format]
 quote-style = "double"

@@ -35,7 +35,7 @@ def count_tokens(text: str, model: str = "") -> int:
             enc = _get_encoding(model)
             return len(enc.encode(text))
         except Exception:
-            pass
+            logger.debug("tiktoken encoding failed for model=%s", model)
     return max(1, len(text) // 4)
 
 
@@ -49,7 +49,7 @@ def truncate_text_to_tokens(text: str, max_tokens: int, model: str = "") -> str:
                 return text
             return str(enc.decode(token_ids[:max_tokens])) + "…[截断]"
         except Exception:
-            pass
+            logger.debug("tiktoken truncation failed for model=%s", model)
     char_limit = max_tokens * 4
     if len(text) <= char_limit:
         return text

@@ -5,11 +5,10 @@ import logging
 from collections.abc import Generator
 from typing import Any, Protocol
 
-from openai import OpenAI
-
 from agent_app.config import Settings
 from agent_app.llm_profiles import preset_for
 from agent_app.models import Plan, StreamChunk, StreamResult
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +169,7 @@ class Planner(Protocol):
 
     def plan_stream(
         self, user_text: str, history: list[dict[str, str]] | None = None
-    ) -> Generator[StreamChunk | StreamResult, None, None]: ...
+    ) -> Generator[StreamChunk | StreamResult]: ...
 
     def update_settings(self, settings: Settings) -> None: ...
 
@@ -233,7 +232,7 @@ class OpenAICompatPlanner:
 
     def plan_stream(
         self, user_text: str, history: list[dict[str, str]] | None = None
-    ) -> Generator[StreamChunk | StreamResult, None, None]:
+    ) -> Generator[StreamChunk | StreamResult]:
         if not self._client:
             result_plan = _rule_based_plan(user_text)
             yield StreamResult(plan=result_plan, full_text=result_plan.message)
@@ -352,7 +351,7 @@ class OpenAICompatPlanner:
 
     def _plan_stream_no_tools(
         self, messages: list[dict[str, Any]]
-    ) -> Generator[StreamChunk | StreamResult, None, None]:
+    ) -> Generator[StreamChunk | StreamResult]:
         """Fallback streaming without tools for local models that don't support function calling."""
         try:
             response = self._client.chat.completions.create(  # type: ignore[union-attr]
@@ -361,7 +360,7 @@ class OpenAICompatPlanner:
                 temperature=0,
                 stream=True,
             )
-        except Exception as exc:
+        except Exception:
             label = _provider_label(self._settings)
             logger.exception("Fallback (no tools) stream failed provider=%s", label)
             error_msg = f"{label} 调用失败（无工具模式）。"
@@ -410,7 +409,7 @@ class AnthropicPlanner:
 
     def plan_stream(
         self, user_text: str, history: list[dict[str, str]] | None = None
-    ) -> Generator[StreamChunk | StreamResult, None, None]:
+    ) -> Generator[StreamChunk | StreamResult]:
         if not self._client:
             result_plan = _rule_based_plan(user_text)
             yield StreamResult(plan=result_plan, full_text=result_plan.message)
@@ -560,5 +559,5 @@ class LLMPlanner:
 
     def plan_stream(
         self, user_text: str, history: list[dict[str, str]] | None = None
-    ) -> Generator[StreamChunk | StreamResult, None, None]:
+    ) -> Generator[StreamChunk | StreamResult]:
         yield from self._delegate.plan_stream(user_text, history)

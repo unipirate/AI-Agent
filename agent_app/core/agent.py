@@ -45,7 +45,7 @@ class Agent:
 
     def handle_user_message_stream(
         self, user_text: str, history: list[dict[str, str]] | None = None
-    ) -> Generator[StreamChunk | AgentReply, None, None]:
+    ) -> Generator[StreamChunk | AgentReply]:
         """Streaming entry point: yields StreamChunks during generation, then a final AgentReply."""
         logger.info("User message received (stream, %d chars)", len(user_text))
 
@@ -100,7 +100,11 @@ class Agent:
                     args=plan.tool_args,
                 )
                 self.pending_actions[action.action_id] = action
-                details = f"{action.description}\n工具: {action.tool_name}\n参数: {asdict(action)['args']}"
+                details = (
+                    f"{action.description}\n"
+                    f"工具: {action.tool_name}\n"
+                    f"参数: {asdict(action)['args']}"
+                )
                 return AgentReply(
                     message=f"该操作需要确认：\n{details}",
                     pending_action=action,

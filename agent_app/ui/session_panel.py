@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import messagebox, simpledialog, ttk
-from typing import Callable
 
 from agent_app.conversation import SessionIndex, SessionMeta
 from agent_app.ui.theme import (
@@ -82,7 +82,7 @@ class SessionPanel(ttk.Frame):
 
         self._canvas.bind("<Configure>", self._on_canvas_resize)
 
-    def _on_canvas_resize(self, event: "tk.Event[tk.Canvas]") -> None:
+    def _on_canvas_resize(self, event: tk.Event[tk.Canvas]) -> None:
         self._canvas.itemconfig(self._canvas_window, width=event.width)
 
     def _populate(self) -> None:
@@ -128,7 +128,7 @@ class SessionPanel(ttk.Frame):
             widget.bind("<Button-2>", lambda e, s=sid: self._show_context_menu(e, s))  # type: ignore[misc]
             widget.bind("<Button-3>", lambda e, s=sid: self._show_context_menu(e, s))  # type: ignore[misc]
 
-    def _show_context_menu(self, event: "tk.Event[tk.Misc]", session_id: str) -> None:
+    def _show_context_menu(self, event: tk.Event[tk.Misc], session_id: str) -> None:
         menu = tk.Menu(self, tearoff=0)
         menu.add_command(label="重命名", command=lambda: self._do_rename(session_id))
         menu.add_command(label="删除", command=lambda: self._do_delete(session_id))

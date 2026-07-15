@@ -3,9 +3,9 @@ from __future__ import annotations
 import logging
 import queue
 import tkinter as tk
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 from agent_app.models import AgentReply, StreamChunk
 
@@ -55,7 +55,7 @@ class BackgroundRunner:
 
     def submit_streaming(
         self,
-        work: Callable[[], Generator[StreamChunk | AgentReply, None, None]],
+        work: Callable[[], Generator[StreamChunk | AgentReply]],
         on_chunk: Callable[[str], None],
         on_success: Callable[[AgentReply], None],
         *,

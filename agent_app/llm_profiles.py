@@ -10,7 +10,11 @@ from uuid import uuid4
 import requests
 
 from agent_app.config import Settings
-from agent_app.core.llm_status import fetch_active_server_models, fetch_server_models, resolve_local_llm
+from agent_app.core.llm_status import (
+    fetch_active_server_models,
+    fetch_server_models,
+    resolve_local_llm,
+)
 from agent_app.secrets import load_api_key, save_api_key
 
 logger = logging.getLogger(__name__)
@@ -209,7 +213,11 @@ def resolve_api_key(profile: LlmProfile) -> str | None:
 
     preset = preset_for(profile.provider_id)
     if preset.env_key_var:
-        env_value = os.getenv(preset.env_key_var) or os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+        env_value = (
+            os.getenv(preset.env_key_var)
+            or os.getenv("LLM_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+        )
         if env_value:
             return env_value
 
@@ -234,7 +242,9 @@ def profile_to_settings(profile: LlmProfile, base: Settings | None = None) -> Se
     allowed_root = (
         base.allowed_root
         if base
-        else Path(os.getenv("AGENT_ALLOWED_ROOT", "~/Documents/AI-Agent-Sandbox")).expanduser().resolve()
+        else Path(os.getenv("AGENT_ALLOWED_ROOT", "~/Documents/AI-Agent-Sandbox"))
+        .expanduser()
+        .resolve()
     )
     tavily = base.tavily_api_key if base else os.getenv("TAVILY_API_KEY") or None
 
@@ -273,7 +283,9 @@ def save_profile_store(store: ProfileStore) -> None:
         "active_profile_id": store.active_profile_id,
         "profiles": [profile.to_dict() for profile in store.profiles],
     }
-    PROFILES_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    PROFILES_PATH.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 def _infer_local_provider(base_url: str) -> str:
@@ -331,7 +343,11 @@ def draft_profile(
 ) -> LlmProfile:
     preset = preset_for(provider_id)
     resolved_base_url = base_url.strip() or (preset.base_url or "")
-    if provider_id != "custom" and not is_local_provider(provider_id) and not preset.uses_anthropic:
+    if (
+        provider_id != "custom"
+        and not is_local_provider(provider_id)
+        and not preset.uses_anthropic
+    ):
         resolved_base_url = preset.base_url or ""
     if preset.uses_anthropic:
         resolved_base_url = None
@@ -362,9 +378,15 @@ def apply_profile_key(profile_id: str, new_key: str | None) -> None:
         save_api_key(profile_id, new_key.strip())
 
 
-def test_profile_connection(profile: LlmProfile, api_key_override: str | None = None) -> tuple[bool, str]:
+def test_profile_connection(
+    profile: LlmProfile, api_key_override: str | None = None
+) -> tuple[bool, str]:
     preset = preset_for(profile.provider_id)
-    api_key = api_key_override.strip() if api_key_override and api_key_override.strip() else resolve_api_key(profile)
+    api_key = (
+        api_key_override.strip()
+        if api_key_override and api_key_override.strip()
+        else resolve_api_key(profile)
+    )
 
     if preset.uses_anthropic:
         if not api_key:
@@ -404,7 +426,10 @@ def test_profile_connection(profile: LlmProfile, api_key_override: str | None = 
             return False, "请填写 API Key。"
 
     if not api_key:
-        return False, f"请先填写 API Key，或在 .env 中设置 {preset.env_key_var or 'LLM_API_KEY'}。"
+        return (
+            False,
+            f"请先填写 API Key，或在 .env 中设置 {preset.env_key_var or 'LLM_API_KEY'}。",
+        )
 
     base_url = profile.base_url or preset.base_url
     try:
@@ -417,11 +442,16 @@ def test_profile_connection(profile: LlmProfile, api_key_override: str | None = 
                 if model_ids:
                     return True, f"已连接，可用模型: {', '.join(model_ids[:5])}"
             except requests.RequestException:
-                logger.warning("GET /models failed for %s; falling back to completion probe", base_url)
+                logger.warning(
+                    "GET /models failed for %s; falling back to completion probe",
+                    base_url,
+                )
         else:
             client = OpenAI(api_key=api_key)
 
-        model = profile.model or (preset.default_models[0] if preset.default_models else "gpt-4o-mini")
+        model = profile.model or (
+            preset.default_models[0] if preset.default_models else "gpt-4o-mini"
+        )
         client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": "ping"}],
@@ -429,7 +459,9 @@ def test_profile_connection(profile: LlmProfile, api_key_override: str | None = 
         )
         return True, f"已连接，模型: {model}"
     except Exception:
-        logger.exception("Cloud LLM connection test failed provider=%s", profile.provider_id)
+        logger.exception(
+            "Cloud LLM connection test failed provider=%s", profile.provider_id
+        )
         return False, "连接失败，请检查 API Key、base_url 与网络。"
 
 
@@ -445,5 +477,7 @@ def resolve_profile_llm(profile: LlmProfile, base: Settings) -> tuple[Settings, 
         return settings, "Claude 未配置 API Key，请在设置中填写。"
     if not settings.llm_api_key:
         return settings, f"{preset.display_name} 未配置 API Key，将使用规则模式。"
-    model = settings.llm_model or (preset.default_models[0] if preset.default_models else "")
+    model = settings.llm_model or (
+        preset.default_models[0] if preset.default_models else ""
+    )
     return settings, f"已选择 {preset.display_name}，模型: {model or '默认'}"

@@ -98,7 +98,10 @@ class ChatSession:
         all_msgs: list[dict[str, str]] = []
         for m in self.messages:
             if m.role == "tool":
-                entry = {"role": "user", "content": f"[Tool: {m.tool_name}]\n{m.content}"}
+                entry = {
+                    "role": "user",
+                    "content": f"[Tool: {m.tool_name}]\n{m.content}",
+                }
             else:
                 entry = {"role": m.role, "content": m.content}
 
@@ -200,7 +203,9 @@ class SessionIndex:
 
         If the list becomes empty, creates a new session as fallback.
         """
-        idx = next((i for i, s in enumerate(self.sessions) if s.session_id == session_id), None)
+        idx = next(
+            (i for i, s in enumerate(self.sessions) if s.session_id == session_id), None
+        )
         if idx is not None:
             self.sessions.pop(idx)
 

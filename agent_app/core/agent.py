@@ -27,10 +27,16 @@ class Agent:
         settings, message = resolve_profile_llm(profile, self.settings)
         self.settings = settings
         self.planner.update_settings(settings)
-        logger.info("Applied LLM profile provider=%s model=%s", profile.provider_id, settings.llm_model)
+        logger.info(
+            "Applied LLM profile provider=%s model=%s",
+            profile.provider_id,
+            settings.llm_model,
+        )
         return message
 
-    def handle_user_message(self, user_text: str, history: list[dict[str, str]] | None = None) -> AgentReply:
+    def handle_user_message(
+        self, user_text: str, history: list[dict[str, str]] | None = None
+    ) -> AgentReply:
         """Non-streaming entry point (kept for backward compatibility)."""
         logger.info("User message received (%d chars)", len(user_text))
         plan = self.planner.plan(user_text, history)
@@ -63,7 +69,9 @@ class Agent:
                         chunk_type="tool_status",
                     )
 
-                logger.debug("yield final AgentReply, message len=%d", len(reply.message))
+                logger.debug(
+                    "yield final AgentReply, message len=%d", len(reply.message)
+                )
                 yield reply
 
     def approve_action(self, action_id: str) -> AgentReply:
@@ -109,7 +117,9 @@ class Agent:
         if tool_name == "list_files":
             path = str(args.get("path", "."))
             max_items = int(args.get("max_items", 50))
-            return list_files(allowed_root=self.settings.allowed_root, path=path, max_items=max_items)
+            return list_files(
+                allowed_root=self.settings.allowed_root, path=path, max_items=max_items
+            )
 
         if tool_name == "move_file":
             src = str(args.get("src", ""))

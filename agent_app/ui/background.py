@@ -19,7 +19,9 @@ class BackgroundRunner:
 
     def __init__(self, root: tk.Misc) -> None:
         self._root = root
-        self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agent-worker")
+        self._executor = ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="agent-worker"
+        )
 
     def submit(
         self,
@@ -106,7 +108,11 @@ class BackgroundRunner:
 
             if batch:
                 on_chunk("".join(batch))
-                logger.debug("poll drained %d chunks, %d chars", len(batch), sum(len(s) for s in batch))
+                logger.debug(
+                    "poll drained %d chunks, %d chars",
+                    len(batch),
+                    sum(len(s) for s in batch),
+                )
 
             self._root.after(50, poll)
 

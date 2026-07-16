@@ -5,7 +5,13 @@ from tkinter import messagebox, simpledialog, ttk
 from typing import Callable
 
 from agent_app.conversation import SessionIndex, SessionMeta
-from agent_app.ui.theme import COLOR_ACCENT, COLOR_BG, COLOR_MUTED, COLOR_SURFACE, COLOR_TEXT
+from agent_app.ui.theme import (
+    COLOR_ACCENT,
+    COLOR_BG,
+    COLOR_MUTED,
+    COLOR_SURFACE,
+    COLOR_TEXT,
+)
 
 
 class SessionPanel(ttk.Frame):
@@ -56,7 +62,9 @@ class SessionPanel(ttk.Frame):
             highlightthickness=0,
             width=200,
         )
-        scrollbar = ttk.Scrollbar(container, orient=tk.VERTICAL, command=self._canvas.yview)
+        scrollbar = ttk.Scrollbar(
+            container, orient=tk.VERTICAL, command=self._canvas.yview
+        )
         self._scrollable = ttk.Frame(self._canvas)
 
         self._scrollable.bind(
@@ -64,7 +72,9 @@ class SessionPanel(ttk.Frame):
             lambda e: self._canvas.configure(scrollregion=self._canvas.bbox("all")),
         )
 
-        self._canvas_window = self._canvas.create_window((0, 0), window=self._scrollable, anchor="nw")
+        self._canvas_window = self._canvas.create_window(
+            (0, 0), window=self._scrollable, anchor="nw"
+        )
         self._canvas.configure(yscrollcommand=scrollbar.set)
 
         self._canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)

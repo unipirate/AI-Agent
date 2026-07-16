@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Generator
 from dataclasses import asdict
+from typing import Any
 from uuid import uuid4
 
 from agent_app.config import Settings
@@ -112,7 +113,7 @@ class Agent:
 
         return AgentReply("我没能识别到可执行动作，请换一种描述试试。")
 
-    def _run_tool(self, tool_name: str, args: dict) -> str:
+    def _run_tool(self, tool_name: str, args: dict[str, Any]) -> str:
         logger.info("Running tool=%s args=%s", tool_name, args)
         if tool_name == "list_files":
             path = str(args.get("path", "."))

@@ -5,6 +5,7 @@ import logging
 import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 import requests
@@ -128,7 +129,7 @@ class LlmProfile:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> LlmProfile:
+    def from_dict(cls, data: dict[str, Any]) -> LlmProfile:
         return cls(
             id=data["id"],
             provider_id=data["provider_id"],
@@ -342,7 +343,7 @@ def draft_profile(
     model: str,
 ) -> LlmProfile:
     preset = preset_for(provider_id)
-    resolved_base_url = base_url.strip() or (preset.base_url or "")
+    resolved_base_url: str | None = base_url.strip() or (preset.base_url or "")
     if (
         provider_id != "custom"
         and not is_local_provider(provider_id)
@@ -436,7 +437,7 @@ def test_profile_connection(
         from openai import OpenAI
 
         if base_url:
-            client = OpenAI(base_url=base_url, api_key=api_key or "local")
+            oai_client = OpenAI(base_url=base_url, api_key=api_key or "local")
             try:
                 model_ids = fetch_server_models(base_url)
                 if model_ids:
@@ -447,12 +448,12 @@ def test_profile_connection(
                     base_url,
                 )
         else:
-            client = OpenAI(api_key=api_key)
+            oai_client = OpenAI(api_key=api_key)
 
         model = profile.model or (
             preset.default_models[0] if preset.default_models else "gpt-4o-mini"
         )
-        client.chat.completions.create(
+        oai_client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": "ping"}],
             max_tokens=1,

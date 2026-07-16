@@ -11,7 +11,7 @@ MAX_TOOL_CONTENT_CHARS: int = 8000
 _SINGLE_MSG_TOKEN_CAP: int = 1500
 
 try:
-    import tiktoken
+    import tiktoken  # type: ignore[import-not-found]
 
     _TIKTOKEN_AVAILABLE = True
 except ImportError:
@@ -47,7 +47,7 @@ def truncate_text_to_tokens(text: str, max_tokens: int, model: str = "") -> str:
             token_ids = enc.encode(text)
             if len(token_ids) <= max_tokens:
                 return text
-            return enc.decode(token_ids[:max_tokens]) + "…[截断]"
+            return str(enc.decode(token_ids[:max_tokens])) + "…[截断]"
         except Exception:
             pass
     char_limit = max_tokens * 4

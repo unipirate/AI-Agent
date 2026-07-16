@@ -251,8 +251,8 @@ class OpenAICompatPlanner:
         try:
             response = self._client.chat.completions.create(
                 model=self._settings.llm_model,
-                messages=messages,
-                tools=TOOL_DEFINITIONS,
+                messages=messages,  # type: ignore[arg-type]
+                tools=TOOL_DEFINITIONS,  # type: ignore[arg-type]
                 temperature=0,
                 stream=True,
             )
@@ -287,7 +287,7 @@ class OpenAICompatPlanner:
 
         try:
             for chunk in response:
-                choice = chunk.choices[0] if chunk.choices else None
+                choice = chunk.choices[0] if chunk.choices else None  # type: ignore[union-attr]
                 if not choice:
                     continue
 
@@ -365,7 +365,7 @@ class OpenAICompatPlanner:
         try:
             response = self._client.chat.completions.create(  # type: ignore[union-attr]
                 model=self._settings.llm_model,
-                messages=messages,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=0,
                 stream=True,
             )
@@ -381,7 +381,7 @@ class OpenAICompatPlanner:
         full_text = ""
         try:
             for chunk in response:
-                choice = chunk.choices[0] if chunk.choices else None
+                choice = chunk.choices[0] if chunk.choices else None  # type: ignore[union-attr]
                 if not choice:
                     continue
                 delta = choice.delta

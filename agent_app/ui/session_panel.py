@@ -82,7 +82,7 @@ class SessionPanel(ttk.Frame):
 
         self._canvas.bind("<Configure>", self._on_canvas_resize)
 
-    def _on_canvas_resize(self, event: tk.Event) -> None:  # type: ignore[type-arg]
+    def _on_canvas_resize(self, event: "tk.Event[tk.Canvas]") -> None:
         self._canvas.itemconfig(self._canvas_window, width=event.width)
 
     def _populate(self) -> None:
@@ -124,11 +124,11 @@ class SessionPanel(ttk.Frame):
 
         sid = meta.session_id
         for widget in (item_frame, title_label, info_label):
-            widget.bind("<Button-1>", lambda e, s=sid: self._on_switch(s))
-            widget.bind("<Button-2>", lambda e, s=sid: self._show_context_menu(e, s))
-            widget.bind("<Button-3>", lambda e, s=sid: self._show_context_menu(e, s))
+            widget.bind("<Button-1>", lambda e, s=sid: self._on_switch(s))  # type: ignore[misc]
+            widget.bind("<Button-2>", lambda e, s=sid: self._show_context_menu(e, s))  # type: ignore[misc]
+            widget.bind("<Button-3>", lambda e, s=sid: self._show_context_menu(e, s))  # type: ignore[misc]
 
-    def _show_context_menu(self, event: tk.Event, session_id: str) -> None:  # type: ignore[type-arg]
+    def _show_context_menu(self, event: "tk.Event[tk.Misc]", session_id: str) -> None:
         menu = tk.Menu(self, tearoff=0)
         menu.add_command(label="重命名", command=lambda: self._do_rename(session_id))
         menu.add_command(label="删除", command=lambda: self._do_delete(session_id))

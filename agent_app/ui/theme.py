@@ -16,7 +16,7 @@ COLOR_CHAT_FG = "#111827"
 COLOR_CHAT_INSERT = "#2563eb"
 
 
-def center_window(window: tk.Misc, width: int, height: int) -> None:
+def center_window(window: tk.Tk | tk.Toplevel, width: int, height: int) -> None:
     """Place a window at the center of the primary screen."""
     window.update_idletasks()
     screen_w = int(window.winfo_screenwidth())

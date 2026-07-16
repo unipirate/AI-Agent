@@ -45,8 +45,12 @@ def apply_bright_theme(root: tk.Misc) -> ttk.Style:
     style.configure("TFrame", background=COLOR_BG)
     style.configure("TLabel", background=COLOR_BG, foreground=COLOR_TEXT)
     style.configure("Muted.TLabel", background=COLOR_BG, foreground=COLOR_MUTED)
-    style.configure("Title.TLabel", background=COLOR_BG, foreground=COLOR_TEXT, font=title_font)
-    style.configure("Heading.TLabel", background=COLOR_BG, foreground=COLOR_TEXT, font=heading_font)
+    style.configure(
+        "Title.TLabel", background=COLOR_BG, foreground=COLOR_TEXT, font=title_font
+    )
+    style.configure(
+        "Heading.TLabel", background=COLOR_BG, foreground=COLOR_TEXT, font=heading_font
+    )
     style.configure("TLabelframe", background=COLOR_BG, foreground=COLOR_TEXT)
     style.configure("TLabelframe.Label", background=COLOR_BG, foreground=COLOR_TEXT)
     style.configure("TEntry", fieldbackground=COLOR_SURFACE, foreground=COLOR_TEXT)

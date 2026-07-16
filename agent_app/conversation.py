@@ -203,7 +203,9 @@ class SessionIndex:
 
         If the list becomes empty, creates a new session as fallback.
         """
-        idx = next((i for i, s in enumerate(self.sessions) if s.session_id == session_id), None)
+        idx = next(
+            (i for i, s in enumerate(self.sessions) if s.session_id == session_id), None
+        )
         if idx is not None:
             self.sessions.pop(idx)
 

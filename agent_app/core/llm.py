@@ -251,7 +251,9 @@ CONFIRMATION_TOOLS = frozenset({"move_file", "write_file"})
 
 
 class Planner(Protocol):
-    def plan(self, user_text: str, history: list[dict[str, str]] | None = None) -> Plan: ...
+    def plan(
+        self, user_text: str, history: list[dict[str, str]] | None = None
+    ) -> Plan: ...
 
     def plan_stream(
         self, user_text: str, history: list[dict[str, str]] | None = None
@@ -279,7 +281,9 @@ def _rule_based_plan(user_text: str) -> Plan:
             requires_confirmation=True,
             message="我可以帮你移动文件，但需要你给出 src 和 dst 路径。",
         )
-    return Plan(mode="respond", message="我在这。你可以让我列出文件，或者帮你搜索网页信息。")
+    return Plan(
+        mode="respond", message="我在这。你可以让我列出文件，或者帮你搜索网页信息。"
+    )
 
 
 def _provider_label(settings: Settings) -> str:
@@ -343,7 +347,9 @@ class OpenAICompatPlanner:
             if self._settings.llm_base_url and (
                 "tool" in exc_msg or "function" in exc_msg or "not supported" in exc_msg
             ):
-                logger.warning("Local model does not support tools, falling back to plain stream")
+                logger.warning(
+                    "Local model does not support tools, falling back to plain stream"
+                )
                 yield from self._plan_stream_no_tools(messages)
                 return
 
@@ -380,7 +386,9 @@ class OpenAICompatPlanner:
                 if delta.tool_calls:
                     for tc_delta in delta.tool_calls:
                         idx = tc_delta.index
-                        buf = tool_call_buffers.setdefault(idx, {"name": "", "arguments": ""})
+                        buf = tool_call_buffers.setdefault(
+                            idx, {"name": "", "arguments": ""}
+                        )
                         if tc_delta.function and tc_delta.function.name:
                             buf["name"] += tc_delta.function.name
                         if tc_delta.function and tc_delta.function.arguments:
@@ -450,7 +458,9 @@ class OpenAICompatPlanner:
             label = _provider_label(self._settings)
             logger.exception("Fallback (no tools) stream failed provider=%s", label)
             error_msg = f"{label} 调用失败（无工具模式）。"
-            yield StreamResult(plan=Plan(mode="respond", message=error_msg), full_text=error_msg)
+            yield StreamResult(
+                plan=Plan(mode="respond", message=error_msg), full_text=error_msg
+            )
             return
 
         full_text = ""
@@ -544,7 +554,9 @@ class AnthropicPlanner:
                             in_tool_use_block = True
                             current_tool_name = getattr(block, "name", "")
                             tool_input_json = ""
-                            logger.debug("Anthropic tool_use block start: %s", current_tool_name)
+                            logger.debug(
+                                "Anthropic tool_use block start: %s", current_tool_name
+                            )
 
                     elif event_type == "content_block_delta":
                         delta = getattr(event, "delta", None)
@@ -567,14 +579,20 @@ class AnthropicPlanner:
                     elif event_type == "content_block_stop":
                         if in_tool_use_block:
                             try:
-                                tool_args = json.loads(tool_input_json) if tool_input_json else {}
+                                tool_args = (
+                                    json.loads(tool_input_json)
+                                    if tool_input_json
+                                    else {}
+                                )
                             except json.JSONDecodeError:
                                 logger.error(
                                     "Failed to parse Anthropic tool args: %s",
                                     tool_input_json,
                                 )
                                 tool_args = {}
-                            requires_confirmation = current_tool_name in CONFIRMATION_TOOLS
+                            requires_confirmation = (
+                                current_tool_name in CONFIRMATION_TOOLS
+                            )
                             final_plan = Plan(
                                 mode="tool",
                                 tool_name=current_tool_name,

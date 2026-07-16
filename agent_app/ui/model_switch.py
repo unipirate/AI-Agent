@@ -162,9 +162,9 @@ class ModelSwitchDialog(tk.Toplevel):
         header = ttk.Frame(self._config_frame)
         header.pack(fill=tk.X, pady=(0, 12))
         ttk.Button(header, text="← 返回", command=self._show_picker).pack(side=tk.LEFT)
-        ttk.Label(header, textvariable=self._config_title_var, style="Heading.TLabel").pack(
-            side=tk.LEFT, padx=(12, 0)
-        )
+        ttk.Label(
+            header, textvariable=self._config_title_var, style="Heading.TLabel"
+        ).pack(side=tk.LEFT, padx=(12, 0))
 
         form = ttk.Frame(self._config_frame)
         form.pack(fill=tk.BOTH, expand=True)
@@ -173,9 +173,9 @@ class ModelSwitchDialog(tk.Toplevel):
         self._display_name_frame = ttk.Frame(form)
         self._display_name_frame.grid(row=0, column=0, sticky=tk.EW, pady=(0, 10))
         ttk.Label(self._display_name_frame, text="显示名称").pack(anchor=tk.W)
-        ttk.Entry(self._display_name_frame, textvariable=self.display_name_var, width=44).pack(
-            fill=tk.X, expand=True
-        )
+        ttk.Entry(
+            self._display_name_frame, textvariable=self.display_name_var, width=44
+        ).pack(fill=tk.X, expand=True)
 
         self._base_url_frame = ttk.Frame(form)
         self._base_url_frame.grid(row=1, column=0, sticky=tk.EW, pady=(0, 10))
@@ -195,7 +195,9 @@ class ModelSwitchDialog(tk.Toplevel):
             model_header, text="重新扫描", command=self._discover_local_models
         )
         self.rescan_btn.pack(side=tk.RIGHT)
-        self.model_combo = ttk.Combobox(self._model_frame, textvariable=self.model_var, width=42)
+        self.model_combo = ttk.Combobox(
+            self._model_frame, textvariable=self.model_var, width=42
+        )
         self.model_combo.pack(fill=tk.X, expand=True)
         self.model_combo.bind("<<ComboboxSelected>>", self._on_model_combo_selected)
 
@@ -206,7 +208,9 @@ class ModelSwitchDialog(tk.Toplevel):
         key_row.pack(fill=tk.X, expand=True)
         self.key_hint = ttk.Label(key_row, text="未设置", style="Muted.TLabel")
         self.key_hint.pack(side=tk.LEFT)
-        self.api_key_entry = ttk.Entry(key_row, textvariable=self.api_key_var, show="*", width=34)
+        self.api_key_entry = ttk.Entry(
+            key_row, textvariable=self.api_key_var, show="*", width=34
+        )
         self.api_key_entry.pack(side=tk.RIGHT, fill=tk.X, expand=True)
 
         ttk.Label(form, textvariable=self.status_var, style="Muted.TLabel").grid(
@@ -217,7 +221,9 @@ class ModelSwitchDialog(tk.Toplevel):
         buttons.pack(fill=tk.X)
         self.test_btn = ttk.Button(buttons, text="测试连接", command=self._on_test)
         self.test_btn.pack(side=tk.LEFT)
-        ttk.Button(buttons, text="取消", command=self._on_cancel).pack(side=tk.RIGHT, padx=(8, 0))
+        ttk.Button(buttons, text="取消", command=self._on_cancel).pack(
+            side=tk.RIGHT, padx=(8, 0)
+        )
 
         primary_text = "保存并继续" if self.mode == "startup" else "应用"
         ttk.Button(
@@ -305,8 +311,12 @@ class ModelSwitchDialog(tk.Toplevel):
 
     def _discover_local_models(self) -> None:
         active = self.store.get_active()
-        saved_model = active.model if active and is_local_provider(active.provider_id) else ""
-        saved_base = active.base_url if active and is_local_provider(active.provider_id) else ""
+        saved_model = (
+            active.model if active and is_local_provider(active.provider_id) else ""
+        )
+        saved_base = (
+            active.base_url if active and is_local_provider(active.provider_id) else ""
+        )
 
         self.model_combo.configure(state=tk.DISABLED, values=())
         self.local_model_var.set("")
@@ -350,7 +360,9 @@ class ModelSwitchDialog(tk.Toplevel):
         def on_finished() -> None:
             self.rescan_btn.configure(state=tk.NORMAL)
 
-        self._runner.submit(work, on_success, on_error=on_error, on_finished=on_finished)
+        self._runner.submit(
+            work, on_success, on_error=on_error, on_finished=on_finished
+        )
 
     def _load_profile(self, profile: LlmProfile) -> None:
         self._profile_id = profile.id
@@ -412,7 +424,10 @@ class ModelSwitchDialog(tk.Toplevel):
         self.api_key_entry.configure(state=tk.NORMAL)
 
     def _on_test(self) -> None:
-        if self._entry_key == LOCAL_GROUP_KEY and not self.local_model_var.get().strip():
+        if (
+            self._entry_key == LOCAL_GROUP_KEY
+            and not self.local_model_var.get().strip()
+        ):
             self.status_var.set("请先选择一个本地模型。")
             return
 
@@ -434,12 +449,17 @@ class ModelSwitchDialog(tk.Toplevel):
         self._runner.submit(
             work,
             on_success,
-            on_error=lambda exc: self.status_var.set(format_user_error("测试连接失败。", exc)),
+            on_error=lambda exc: self.status_var.set(
+                format_user_error("测试连接失败。", exc)
+            ),
             on_finished=on_finished,
         )
 
     def _on_confirm(self) -> None:
-        if self._entry_key == LOCAL_GROUP_KEY and not self.local_model_var.get().strip():
+        if (
+            self._entry_key == LOCAL_GROUP_KEY
+            and not self.local_model_var.get().strip()
+        ):
             self.status_var.set("请先选择一个本地模型。")
             return
 
@@ -489,8 +509,12 @@ class ModelSwitcherBar(ttk.Frame):
         self.on_switch = on_switch
 
         self.summary_var = tk.StringVar(value=f"当前：{profile_summary(profile)}")
-        ttk.Label(self, textvariable=self.summary_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ttk.Button(self, text="切换模型…", command=self._open_dialog).pack(side=tk.RIGHT)
+        ttk.Label(self, textvariable=self.summary_var).pack(
+            side=tk.LEFT, fill=tk.X, expand=True
+        )
+        ttk.Button(self, text="切换模型…", command=self._open_dialog).pack(
+            side=tk.RIGHT
+        )
 
     def update_profile(self, profile: LlmProfile) -> None:
         self.profile = profile

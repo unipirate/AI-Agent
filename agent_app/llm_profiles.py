@@ -5,7 +5,6 @@ import logging
 import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
 from uuid import uuid4
 
 import requests
@@ -129,7 +128,7 @@ class LlmProfile:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> LlmProfile:
+    def from_dict(cls, data: dict) -> LlmProfile:
         return cls(
             id=data["id"],
             provider_id=data["provider_id"],
@@ -215,7 +214,9 @@ def resolve_api_key(profile: LlmProfile) -> str | None:
     preset = preset_for(profile.provider_id)
     if preset.env_key_var:
         env_value = (
-            os.getenv(preset.env_key_var) or os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+            os.getenv(preset.env_key_var)
+            or os.getenv("LLM_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
         )
         if env_value:
             return env_value
@@ -253,6 +254,7 @@ def profile_to_settings(profile: LlmProfile, base: Settings | None = None) -> Se
         llm_model=profile.model,
         llm_provider_id=profile.provider_id,
         tavily_api_key=tavily,
+        mineru_token=base.mineru_token if base else os.getenv("MINERU_TOKEN") or None,
         allowed_root=allowed_root,
     )
 
@@ -282,7 +284,9 @@ def save_profile_store(store: ProfileStore) -> None:
         "active_profile_id": store.active_profile_id,
         "profiles": [profile.to_dict() for profile in store.profiles],
     }
-    PROFILES_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    PROFILES_PATH.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 def _infer_local_provider(base_url: str) -> str:
@@ -339,8 +343,12 @@ def draft_profile(
     model: str,
 ) -> LlmProfile:
     preset = preset_for(provider_id)
-    resolved_base_url: str | None = base_url.strip() or (preset.base_url or "")
-    if provider_id != "custom" and not is_local_provider(provider_id) and not preset.uses_anthropic:
+    resolved_base_url = base_url.strip() or (preset.base_url or "")
+    if (
+        provider_id != "custom"
+        and not is_local_provider(provider_id)
+        and not preset.uses_anthropic
+    ):
         resolved_base_url = preset.base_url or ""
     if preset.uses_anthropic:
         resolved_base_url = None
@@ -429,7 +437,7 @@ def test_profile_connection(
         from openai import OpenAI
 
         if base_url:
-            oai_client = OpenAI(base_url=base_url, api_key=api_key or "local")
+            client = OpenAI(base_url=base_url, api_key=api_key or "local")
             try:
                 model_ids = fetch_server_models(base_url)
                 if model_ids:
@@ -440,19 +448,21 @@ def test_profile_connection(
                     base_url,
                 )
         else:
-            oai_client = OpenAI(api_key=api_key)
+            client = OpenAI(api_key=api_key)
 
         model = profile.model or (
             preset.default_models[0] if preset.default_models else "gpt-4o-mini"
         )
-        oai_client.chat.completions.create(
+        client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": "ping"}],
             max_tokens=1,
         )
         return True, f"已连接，模型: {model}"
     except Exception:
-        logger.exception("Cloud LLM connection test failed provider=%s", profile.provider_id)
+        logger.exception(
+            "Cloud LLM connection test failed provider=%s", profile.provider_id
+        )
         return False, "连接失败，请检查 API Key、base_url 与网络。"
 
 
@@ -468,5 +478,7 @@ def resolve_profile_llm(profile: LlmProfile, base: Settings) -> tuple[Settings, 
         return settings, "Claude 未配置 API Key，请在设置中填写。"
     if not settings.llm_api_key:
         return settings, f"{preset.display_name} 未配置 API Key，将使用规则模式。"
-    model = settings.llm_model or (preset.default_models[0] if preset.default_models else "")
+    model = settings.llm_model or (
+        preset.default_models[0] if preset.default_models else ""
+    )
     return settings, f"已选择 {preset.display_name}，模型: {model or '默认'}"

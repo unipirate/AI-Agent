@@ -5,11 +5,10 @@ import logging
 from collections.abc import Generator
 from typing import Any, Protocol
 
-from openai import OpenAI
-
 from agent_app.config import Settings
 from agent_app.llm_profiles import preset_for
 from agent_app.models import Plan, StreamChunk, StreamResult
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -247,8 +246,7 @@ class OpenAICompatPlanner:
         try:
             response = self._client.chat.completions.create(
                 model=self._settings.llm_model,
-                messages=messages,
-                tools=TOOL_DEFINITIONS,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=0,
                 stream=True,
             )

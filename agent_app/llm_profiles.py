@@ -10,7 +10,11 @@ from uuid import uuid4
 import requests
 
 from agent_app.config import Settings
-from agent_app.core.llm_status import fetch_active_server_models, fetch_server_models, resolve_local_llm
+from agent_app.core.llm_status import (
+    fetch_active_server_models,
+    fetch_server_models,
+    resolve_local_llm,
+)
 from agent_app.secrets import load_api_key, save_api_key
 
 logger = logging.getLogger(__name__)
@@ -124,13 +128,13 @@ class LlmProfile:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> LlmProfile:
+    def from_dict(cls, data: dict[str, object]) -> LlmProfile:
         return cls(
-            id=data["id"],
-            provider_id=data["provider_id"],
-            display_name=data["display_name"],
-            base_url=data.get("base_url"),
-            model=data.get("model", ""),
+            id=str(data["id"]),
+            provider_id=str(data["provider_id"]),
+            display_name=str(data["display_name"]),
+            base_url=str(data["base_url"]) if data.get("base_url") else None,
+            model=str(data.get("model", "")),
         )
 
 
@@ -209,7 +213,9 @@ def resolve_api_key(profile: LlmProfile) -> str | None:
 
     preset = preset_for(profile.provider_id)
     if preset.env_key_var:
-        env_value = os.getenv(preset.env_key_var) or os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+        env_value = (
+            os.getenv(preset.env_key_var) or os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+        )
         if env_value:
             return env_value
 
@@ -234,7 +240,9 @@ def profile_to_settings(profile: LlmProfile, base: Settings | None = None) -> Se
     allowed_root = (
         base.allowed_root
         if base
-        else Path(os.getenv("AGENT_ALLOWED_ROOT", "~/Documents/AI-Agent-Sandbox")).expanduser().resolve()
+        else Path(os.getenv("AGENT_ALLOWED_ROOT", "~/Documents/AI-Agent-Sandbox"))
+        .expanduser()
+        .resolve()
     )
     tavily = base.tavily_api_key if base else os.getenv("TAVILY_API_KEY") or None
 
@@ -330,7 +338,7 @@ def draft_profile(
     model: str,
 ) -> LlmProfile:
     preset = preset_for(provider_id)
-    resolved_base_url = base_url.strip() or (preset.base_url or "")
+    resolved_base_url: str | None = base_url.strip() or (preset.base_url or "")
     if provider_id != "custom" and not is_local_provider(provider_id) and not preset.uses_anthropic:
         resolved_base_url = preset.base_url or ""
     if preset.uses_anthropic:
@@ -362,9 +370,15 @@ def apply_profile_key(profile_id: str, new_key: str | None) -> None:
         save_api_key(profile_id, new_key.strip())
 
 
-def test_profile_connection(profile: LlmProfile, api_key_override: str | None = None) -> tuple[bool, str]:
+def test_profile_connection(
+    profile: LlmProfile, api_key_override: str | None = None
+) -> tuple[bool, str]:
     preset = preset_for(profile.provider_id)
-    api_key = api_key_override.strip() if api_key_override and api_key_override.strip() else resolve_api_key(profile)
+    api_key = (
+        api_key_override.strip()
+        if api_key_override and api_key_override.strip()
+        else resolve_api_key(profile)
+    )
 
     if preset.uses_anthropic:
         if not api_key:
@@ -410,19 +424,24 @@ def test_profile_connection(profile: LlmProfile, api_key_override: str | None = 
     try:
         from openai import OpenAI
 
+        openai_client: OpenAI
         if base_url:
-            client = OpenAI(base_url=base_url, api_key=api_key or "local")
+            openai_client = OpenAI(base_url=base_url, api_key=api_key or "local")
             try:
                 model_ids = fetch_server_models(base_url)
                 if model_ids:
                     return True, f"已连接，可用模型: {', '.join(model_ids[:5])}"
             except requests.RequestException:
-                logger.warning("GET /models failed for %s; falling back to completion probe", base_url)
+                logger.warning(
+                    "GET /models failed for %s; falling back to completion probe", base_url
+                )
         else:
-            client = OpenAI(api_key=api_key)
+            openai_client = OpenAI(api_key=api_key)
 
-        model = profile.model or (preset.default_models[0] if preset.default_models else "gpt-4o-mini")
-        client.chat.completions.create(
+        model = profile.model or (
+            preset.default_models[0] if preset.default_models else "gpt-4o-mini"
+        )
+        openai_client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": "ping"}],
             max_tokens=1,

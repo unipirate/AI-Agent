@@ -1,0 +1,37 @@
+[project]
+name = "agent-app"
+requires-python = ">=3.13"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = ["agent_app"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C901", "S"]
+ignore = [
+    "S101",  # allow assert
+    "S104",  # binding to all interfaces
+    "S603",  # subprocess call without shell=True check
+    "S607",  # partial executable path
+    "A005",  # module shadows stdlib (secrets.py is intentional)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"agent_app/tools/*" = ["S108"]  # tmp path usage in tools is sandboxed
+"agent_app/llm_profiles.py" = ["C901"]  # complex but stable functions
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+packages = ["agent_app"]
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.bandit]
+targets = ["agent_app"]
+skips = ["B101", "B110"]

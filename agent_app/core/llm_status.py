@@ -4,14 +4,16 @@ import logging
 from dataclasses import replace
 
 import requests
-
 from agent_app.config import Settings
 
 logger = logging.getLogger(__name__)
 
 
-def _parse_models_list(data: dict) -> list[str]:
-    return [item.get("id", "") for item in data.get("data", []) if item.get("id")]
+def _parse_models_list(data: dict[str, object]) -> list[str]:
+    items = data.get("data", [])
+    if not isinstance(items, list):
+        return []
+    return [item.get("id", "") for item in items if isinstance(item, dict) and item.get("id")]
 
 
 def fetch_server_models(base_url: str, timeout: int = 3) -> list[str]:
@@ -41,7 +43,9 @@ def fetch_active_server_models(base_url: str, timeout: int = 3) -> list[str]:
         resp = requests.get(f"{root}/api/ps", timeout=timeout)
         if resp.ok:
             payload = resp.json()
-            models = [item.get("name", "") for item in payload.get("models", []) if item.get("name")]
+            models = [
+                item.get("name", "") for item in payload.get("models", []) if item.get("name")
+            ]
             if models:
                 logger.debug("Active models from Ollama /api/ps at %s: %d", base_url, len(models))
                 return models
@@ -75,8 +79,7 @@ def resolve_local_llm(settings: Settings) -> tuple[Settings, str]:
         if configured and configured != active:
             resolved = replace(settings, llm_model=active)
             return resolved, (
-                f"已自动切换到当前运行的模型: {active}"
-                f"（配置中为 {configured}，换模型后无需改配置）"
+                f"已自动切换到当前运行的模型: {active}（配置中为 {configured}，换模型后无需改配置）"
             )
         resolved = replace(settings, llm_model=active)
         return resolved, f"已连接本地 LLM，当前模型: {active}"

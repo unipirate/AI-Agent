@@ -34,7 +34,7 @@ def count_tokens(text: str, model: str = "") -> int:
         try:
             enc = _get_encoding(model)
             return len(enc.encode(text))
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return max(1, len(text) // 4)
 
@@ -47,8 +47,8 @@ def truncate_text_to_tokens(text: str, max_tokens: int, model: str = "") -> str:
             token_ids = enc.encode(text)
             if len(token_ids) <= max_tokens:
                 return text
-            return enc.decode(token_ids[:max_tokens]) + "…[截断]"
-        except Exception:
+            return enc.decode(token_ids[:max_tokens]) + "…[截断]"  # type: ignore[no-any-return]
+        except Exception:  # noqa: S110
             pass
     char_limit = max_tokens * 4
     if len(text) <= char_limit:

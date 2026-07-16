@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import tkinter as tk
-from collections.abc import Callable
 from tkinter import messagebox, simpledialog, ttk
+from typing import Callable
 
 from agent_app.conversation import SessionIndex, SessionMeta
 from agent_app.ui.theme import (
     COLOR_ACCENT,
     COLOR_BG,
+    COLOR_HIGHLIGHT,
     COLOR_MUTED,
+    COLOR_SIDEBAR_BG,
     COLOR_SURFACE,
     COLOR_TEXT,
 )
@@ -58,7 +60,7 @@ class SessionPanel(ttk.Frame):
 
         self._canvas = tk.Canvas(
             container,
-            bg=COLOR_BG,
+            bg=COLOR_SIDEBAR_BG,
             highlightthickness=0,
             width=200,
         )
@@ -82,7 +84,7 @@ class SessionPanel(ttk.Frame):
 
         self._canvas.bind("<Configure>", self._on_canvas_resize)
 
-    def _on_canvas_resize(self, event: tk.Event[tk.Canvas]) -> None:
+    def _on_canvas_resize(self, event: "tk.Event[tk.Canvas]") -> None:
         self._canvas.itemconfig(self._canvas_window, width=event.width)
 
     def _populate(self) -> None:
@@ -95,7 +97,7 @@ class SessionPanel(ttk.Frame):
 
     def _create_session_item(self, meta: SessionMeta) -> None:
         is_active = meta.session_id == self._active_id
-        bg = COLOR_SURFACE if is_active else COLOR_BG
+        bg = COLOR_HIGHLIGHT if is_active else COLOR_SIDEBAR_BG
         fg = COLOR_ACCENT if is_active else COLOR_TEXT
 
         item_frame = tk.Frame(self._scrollable, bg=bg, cursor="hand2")
@@ -128,7 +130,7 @@ class SessionPanel(ttk.Frame):
             widget.bind("<Button-2>", lambda e, s=sid: self._show_context_menu(e, s))  # type: ignore[misc]
             widget.bind("<Button-3>", lambda e, s=sid: self._show_context_menu(e, s))  # type: ignore[misc]
 
-    def _show_context_menu(self, event: tk.Event[tk.Misc], session_id: str) -> None:
+    def _show_context_menu(self, event: "tk.Event[tk.Misc]", session_id: str) -> None:
         menu = tk.Menu(self, tearoff=0)
         menu.add_command(label="重命名", command=lambda: self._do_rename(session_id))
         menu.add_command(label="删除", command=lambda: self._do_delete(session_id))

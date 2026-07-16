@@ -11,7 +11,7 @@ MAX_TOOL_CONTENT_CHARS: int = 8000
 _SINGLE_MSG_TOKEN_CAP: int = 1500
 
 try:
-    import tiktoken
+    import tiktoken  # type: ignore[import-not-found]
 
     _TIKTOKEN_AVAILABLE = True
 except ImportError:

@@ -87,6 +87,17 @@ class BackgroundRunner:
 
         self._executor.submit(worker)
 
+        def _finish_success(reply: AgentReply) -> None:
+            on_success(reply)
+            if on_finished:
+                on_finished()
+
+        def _finish_error(exc: Exception) -> None:
+            if on_error:
+                on_error(exc)
+            if on_finished:
+                on_finished()
+
         def poll() -> None:
             batch: list[str] = []
             try:
@@ -95,12 +106,18 @@ class BackgroundRunner:
                     if isinstance(item, AgentReply):
                         if batch:
                             on_chunk("".join(batch))
-                        self._root.after(0, lambda reply=item: _finish_success(reply))
+                        self._root.after(
+                            0,
+                            lambda reply=item: _finish_success(reply),  # type: ignore[misc]
+                        )
                         return
                     if isinstance(item, Exception):
                         if batch:
                             on_chunk("".join(batch))
-                        self._root.after(0, lambda exc=item: _finish_error(exc))
+                        self._root.after(
+                            0,
+                            lambda exc=item: _finish_error(exc),  # type: ignore[misc]
+                        )
                         return
                     batch.append(item)
             except queue.Empty:
@@ -115,17 +132,6 @@ class BackgroundRunner:
                 )
 
             self._root.after(50, poll)
-
-        def _finish_success(reply: AgentReply) -> None:
-            on_success(reply)
-            if on_finished:
-                on_finished()
-
-        def _finish_error(exc: Exception) -> None:
-            if on_error:
-                on_error(exc)
-            if on_finished:
-                on_finished()
 
         self._root.after(50, poll)
 

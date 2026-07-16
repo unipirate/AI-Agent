@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import replace
+from typing import Any
 
 import requests
 
@@ -10,7 +11,7 @@ from agent_app.config import Settings
 logger = logging.getLogger(__name__)
 
 
-def _parse_models_list(data: dict) -> list[str]:
+def _parse_models_list(data: dict[str, Any]) -> list[str]:
     return [item.get("id", "") for item in data.get("data", []) if item.get("id")]
 
 

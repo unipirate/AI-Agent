@@ -5,7 +5,7 @@ import queue
 import tkinter as tk
 from collections.abc import Generator
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 from agent_app.models import AgentReply, StreamChunk
 

@@ -4,7 +4,7 @@ import json
 import logging
 import tempfile
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -283,9 +283,7 @@ class SessionIndex:
 def _atomic_write_json(path: Path, data: Any) -> None:
     """Write JSON to *path* atomically via temp file + rename."""
     try:
-        fd, tmp_path = tempfile.mkstemp(
-            dir=path.parent, prefix=".as_tmp_", suffix=".json"
-        )
+        fd, tmp_path = tempfile.mkstemp(dir=path.parent, prefix=".as_tmp_", suffix=".json")
         try:
             with open(fd, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
@@ -298,4 +296,4 @@ def _atomic_write_json(path: Path, data: Any) -> None:
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")

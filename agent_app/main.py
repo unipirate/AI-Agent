@@ -16,6 +16,7 @@ def ensure_allowed_root(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
+# Application bootstrap entry point
 def main() -> None:
     configure_logging()
     base_settings = load_settings()

@@ -5,6 +5,7 @@ import logging
 import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 import requests
@@ -128,13 +129,13 @@ class LlmProfile:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict[str, object]) -> LlmProfile:
+    def from_dict(cls, data: dict[str, Any]) -> LlmProfile:
         return cls(
-            id=str(data["id"]),
-            provider_id=str(data["provider_id"]),
-            display_name=str(data["display_name"]),
-            base_url=str(data["base_url"]) if data.get("base_url") else None,
-            model=str(data.get("model", "")),
+            id=data["id"],
+            provider_id=data["provider_id"],
+            display_name=data["display_name"],
+            base_url=data.get("base_url"),
+            model=data.get("model", ""),
         )
 
 
@@ -418,30 +419,33 @@ def test_profile_connection(
             return False, "请填写 API Key。"
 
     if not api_key:
-        return False, f"请先填写 API Key，或在 .env 中设置 {preset.env_key_var or 'LLM_API_KEY'}。"
+        return (
+            False,
+            f"请先填写 API Key，或在 .env 中设置 {preset.env_key_var or 'LLM_API_KEY'}。",
+        )
 
     base_url = profile.base_url or preset.base_url
     try:
         from openai import OpenAI
 
-        openai_client: OpenAI
         if base_url:
-            openai_client = OpenAI(base_url=base_url, api_key=api_key or "local")
+            oai_client = OpenAI(base_url=base_url, api_key=api_key or "local")
             try:
                 model_ids = fetch_server_models(base_url)
                 if model_ids:
                     return True, f"已连接，可用模型: {', '.join(model_ids[:5])}"
             except requests.RequestException:
                 logger.warning(
-                    "GET /models failed for %s; falling back to completion probe", base_url
+                    "GET /models failed for %s; falling back to completion probe",
+                    base_url,
                 )
         else:
-            openai_client = OpenAI(api_key=api_key)
+            oai_client = OpenAI(api_key=api_key)
 
         model = profile.model or (
             preset.default_models[0] if preset.default_models else "gpt-4o-mini"
         )
-        openai_client.chat.completions.create(
+        oai_client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": "ping"}],
             max_tokens=1,

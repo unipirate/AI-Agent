@@ -98,7 +98,10 @@ class ChatSession:
         all_msgs: list[dict[str, str]] = []
         for m in self.messages:
             if m.role == "tool":
-                entry = {"role": "user", "content": f"[Tool: {m.tool_name}]\n{m.content}"}
+                entry = {
+                    "role": "user",
+                    "content": f"[Tool: {m.tool_name}]\n{m.content}",
+                }
             else:
                 entry = {"role": m.role, "content": m.content}
 

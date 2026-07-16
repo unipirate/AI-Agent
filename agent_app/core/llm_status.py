@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import replace
+from typing import Any
 
 import requests
 from agent_app.config import Settings
@@ -9,11 +10,8 @@ from agent_app.config import Settings
 logger = logging.getLogger(__name__)
 
 
-def _parse_models_list(data: dict[str, object]) -> list[str]:
-    items = data.get("data", [])
-    if not isinstance(items, list):
-        return []
-    return [item.get("id", "") for item in items if isinstance(item, dict) and item.get("id")]
+def _parse_models_list(data: dict[str, Any]) -> list[str]:
+    return [item.get("id", "") for item in data.get("data", []) if item.get("id")]
 
 
 def fetch_server_models(base_url: str, timeout: int = 3) -> list[str]:
@@ -88,7 +86,10 @@ def resolve_local_llm(settings: Settings) -> tuple[Settings, str]:
         return settings, f"已连接本地 LLM，使用指定模型: {configured}"
 
     resolved = replace(settings, llm_model=active)
-    return resolved, f"已连接本地 LLM，自动选择: {active}（可用: {', '.join(model_ids)}）"
+    return (
+        resolved,
+        f"已连接本地 LLM，自动选择: {active}（可用: {', '.join(model_ids)}）",
+    )
 
 
 def _cloud_status(settings: Settings) -> str:

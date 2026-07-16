@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import queue
 import tkinter as tk
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TypeVar
 
@@ -55,7 +55,7 @@ class BackgroundRunner:
 
     def submit_streaming(
         self,
-        work: Callable[[], Generator[StreamChunk | AgentReply, None, None]],
+        work: Callable[[], Generator[StreamChunk | AgentReply]],
         on_chunk: Callable[[str], None],
         on_success: Callable[[AgentReply], None],
         *,
@@ -85,31 +85,6 @@ class BackgroundRunner:
 
         self._executor.submit(worker)
 
-        def poll() -> None:
-            batch: list[str] = []
-            try:
-                while True:
-                    item = q.get_nowait()
-                    if isinstance(item, AgentReply):
-                        if batch:
-                            on_chunk("".join(batch))
-                        self._root.after(0, lambda reply=item: _finish_success(reply))
-                        return
-                    if isinstance(item, Exception):
-                        if batch:
-                            on_chunk("".join(batch))
-                        self._root.after(0, lambda exc=item: _finish_error(exc))
-                        return
-                    batch.append(item)
-            except queue.Empty:
-                pass
-
-            if batch:
-                on_chunk("".join(batch))
-                logger.debug("poll drained %d chunks, %d chars", len(batch), sum(len(s) for s in batch))
-
-            self._root.after(50, poll)
-
         def _finish_success(reply: AgentReply) -> None:
             on_success(reply)
             if on_finished:
@@ -120,6 +95,41 @@ class BackgroundRunner:
                 on_error(exc)
             if on_finished:
                 on_finished()
+
+        def poll() -> None:
+            batch: list[str] = []
+            try:
+                while True:
+                    item = q.get_nowait()
+                    if isinstance(item, AgentReply):
+                        if batch:
+                            on_chunk("".join(batch))
+                        self._root.after(
+                            0,
+                            lambda reply=item: _finish_success(reply),  # type: ignore[misc]
+                        )
+                        return
+                    if isinstance(item, Exception):
+                        if batch:
+                            on_chunk("".join(batch))
+                        self._root.after(
+                            0,
+                            lambda exc=item: _finish_error(exc),  # type: ignore[misc]
+                        )
+                        return
+                    batch.append(item)
+            except queue.Empty:
+                pass
+
+            if batch:
+                on_chunk("".join(batch))
+                logger.debug(
+                    "poll drained %d chunks, %d chars",
+                    len(batch),
+                    sum(len(s) for s in batch),
+                )
+
+            self._root.after(50, poll)
 
         self._root.after(50, poll)
 

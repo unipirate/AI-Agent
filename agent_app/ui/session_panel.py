@@ -5,7 +5,13 @@ from collections.abc import Callable
 from tkinter import messagebox, simpledialog, ttk
 
 from agent_app.conversation import SessionIndex, SessionMeta
-from agent_app.ui.theme import COLOR_ACCENT, COLOR_BG, COLOR_MUTED, COLOR_SURFACE, COLOR_TEXT
+from agent_app.ui.theme import (
+    COLOR_ACCENT,
+    COLOR_BG,
+    COLOR_MUTED,
+    COLOR_SURFACE,
+    COLOR_TEXT,
+)
 
 
 class SessionPanel(ttk.Frame):

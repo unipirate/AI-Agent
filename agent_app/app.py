@@ -43,7 +43,8 @@ class AgentDesktopApp:
         self._build_ui()
         self._replay_session()
         self._append(
-            "system", f"{APP_NAME} 已启动。你可以让我列目录、搜索网页，或执行待确认文件操作。"
+            "system",
+            f"{APP_NAME} 已启动。你可以让我列目录、搜索网页，或执行待确认文件操作。",
         )
 
     def _load_or_create_session(self) -> ChatSession:
@@ -229,6 +230,7 @@ class AgentDesktopApp:
                 self.session_panel.refresh()
         except Exception:
             import logging
+
             logging.getLogger(__name__).exception("Failed to persist session")
 
         if reply.pending_action:

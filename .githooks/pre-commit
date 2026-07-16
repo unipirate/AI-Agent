@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -e
+
+echo "🔍 Running ruff format..."
+ruff format agent_app/
+
+echo "🔍 Running ruff check --fix..."
+ruff check agent_app/ --fix
+
+echo "🔍 Running mypy..."
+mypy agent_app/
+
+echo "✅ All checks passed!"
+
+git add -u

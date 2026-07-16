@@ -116,8 +116,8 @@ class ModelSwitchDialog(tk.Toplevel):
 
     def _setup_modal(self) -> None:
         parent = self.master
-        if isinstance(parent, (tk.Tk, tk.Toplevel)) and parent.state() != "withdrawn":
-            self.transient(parent)
+        if hasattr(parent, "state") and parent.state() != "withdrawn":
+            self.transient(parent)  # type: ignore[call-overload]
         _present_toplevel(self)
         self.grab_set()
 

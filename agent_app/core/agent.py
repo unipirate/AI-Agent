@@ -10,7 +10,7 @@ from agent_app.config import Settings
 from agent_app.core.llm import LLMPlanner
 from agent_app.llm_profiles import LlmProfile, resolve_profile_llm
 from agent_app.models import AgentReply, Plan, ProposedAction, StreamChunk, StreamResult
-from agent_app.tools.file_tools import list_files, move_file
+from agent_app.tools.file_tools import list_files, move_file, read_file, write_file
 from agent_app.tools.web_tools import search_web
 
 logger = logging.getLogger(__name__)
@@ -128,6 +128,18 @@ class Agent:
             src = str(args.get("src", ""))
             dst = str(args.get("dst", ""))
             return move_file(allowed_root=self.settings.allowed_root, src=src, dst=dst)
+
+        if tool_name == "read_file":
+            path = str(args.get("path", ""))
+            max_chars = int(args.get("max_chars", 50_000))
+            return read_file(
+                allowed_root=self.settings.allowed_root, path=path, max_chars=max_chars
+            )
+
+        if tool_name == "write_file":
+            path = str(args.get("path", ""))
+            content = str(args.get("content", ""))
+            return write_file(allowed_root=self.settings.allowed_root, path=path, content=content)
 
         if tool_name == "search_web":
             query = str(args.get("query", "")).strip()

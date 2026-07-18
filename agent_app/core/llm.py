@@ -95,6 +95,52 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read the text content of a file within the sandbox.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "File path relative to sandbox root.",
+                    },
+                    "max_chars": {
+                        "type": "integer",
+                        "description": "Maximum number of characters to read.",
+                        "default": 50000,
+                    },
+                },
+                "required": ["path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": (
+                "Write text content to a file within the sandbox."
+                " Creates parent directories if needed. Requires user confirmation."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "File path relative to sandbox root.",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Text content to write to the file.",
+                    },
+                },
+                "required": ["path", "content"],
+            },
+        },
+    },
 ]
 
 # Anthropic uses a slightly different tool schema format
@@ -155,9 +201,49 @@ ANTHROPIC_TOOL_DEFINITIONS: list[dict[str, Any]] = [
             "required": ["src", "dst"],
         },
     },
+    {
+        "name": "read_file",
+        "description": "Read the text content of a file within the sandbox.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "File path relative to sandbox root.",
+                },
+                "max_chars": {
+                    "type": "integer",
+                    "description": "Maximum number of characters to read.",
+                    "default": 50000,
+                },
+            },
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "write_file",
+        "description": (
+            "Write text content to a file within the sandbox."
+            " Creates parent directories if needed. Requires user confirmation."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "File path relative to sandbox root.",
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Text content to write to the file.",
+                },
+            },
+            "required": ["path", "content"],
+        },
+    },
 ]
 
-CONFIRMATION_TOOLS = frozenset({"move_file"})
+CONFIRMATION_TOOLS = frozenset({"move_file", "write_file"})
 
 # ---------------------------------------------------------------------------
 # Protocol

@@ -67,3 +67,56 @@ def move_file(*, allowed_root: Path, src: str, dst: str) -> str:
 
     logger.info("move_file ok src=%s dst=%s", src_path, dst_path)
     return f"已移动: {src_path} -> {dst_path}"
+
+
+def read_file(*, allowed_root: Path, path: str, max_chars: int = 50_000) -> str:
+    if not path.strip():
+        return "read_file 需要 path 参数。"
+
+    root = allowed_root.resolve()
+    try:
+        target = _resolve_inside_root(root, path)
+    except ValueError as exc:
+        logger.warning("read_file rejected path=%r: %s", path, exc)
+        return str(exc)
+
+    if not target.exists():
+        return f"文件不存在: {target}"
+    if not target.is_file():
+        return f"不是普通文件: {target}"
+
+    try:
+        content = target.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        logger.exception("read_file failed path=%s", target)
+        return f"读取文件失败: {type(exc).__name__}"
+
+    truncated = len(content) > max_chars
+    if truncated:
+        content = content[:max_chars]
+
+    header = f"文件: {target} ({len(content)} chars{'，已截断' if truncated else ''})"
+    return f"{header}\n{content}"
+
+
+def write_file(*, allowed_root: Path, path: str, content: str) -> str:
+    if not path.strip():
+        return "write_file 需要 path 参数。"
+
+    root = allowed_root.resolve()
+    try:
+        target = _resolve_inside_root(root, path)
+    except ValueError as exc:
+        logger.warning("write_file rejected path=%r: %s", path, exc)
+        return str(exc)
+
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+    except OSError as exc:
+        logger.exception("write_file failed path=%s", target)
+        return f"写入文件失败: {type(exc).__name__}"
+
+    byte_count = len(content.encode("utf-8"))
+    logger.info("write_file ok path=%s bytes=%d", target, byte_count)
+    return f"已写入: {target} ({byte_count} bytes)"

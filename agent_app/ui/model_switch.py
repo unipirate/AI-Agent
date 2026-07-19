@@ -24,9 +24,10 @@ from agent_app.ui.theme import APP_NAME, apply_bright_theme, center_window
 
 logger = logging.getLogger(__name__)
 
+MINERU_KEYRING_KEY = "mineru_token"
 LOCAL_GROUP_KEY = "local_group"
 DIALOG_WIDTH = 560
-DIALOG_HEIGHT = 480
+DIALOG_HEIGHT = 540
 
 # Sorted alphabetically by button label (plan requirement).
 PROVIDER_BUTTONS: tuple[tuple[str, str], ...] = (
@@ -99,6 +100,8 @@ class ModelSwitchDialog(tk.Toplevel):
         self.api_key_var = tk.StringVar()
         self.status_var = tk.StringVar()
         self._config_title_var = tk.StringVar()
+        self._mineru_enabled_var = tk.BooleanVar(value=False)
+        self._mineru_token_var = tk.StringVar()
         self._runner = BackgroundRunner(parent)
 
         self._container = ttk.Frame(self, padding=16)
@@ -153,6 +156,38 @@ class ModelSwitchDialog(tk.Toplevel):
 
         for col in range(2):
             grid.columnconfigure(col, weight=1)
+
+        # MinerU Token optional section
+        mineru_frame = ttk.LabelFrame(self._picker_frame, text="PDF 解析（可选）", padding=8)
+        mineru_frame.pack(fill=tk.X, pady=(12, 0))
+
+        check_row = ttk.Frame(mineru_frame)
+        check_row.pack(fill=tk.X)
+        self._mineru_check = ttk.Checkbutton(
+            check_row,
+            text="配置 MinerU Token（用于高精度 PDF 提取）",
+            variable=self._mineru_enabled_var,
+            command=self._toggle_mineru_token,
+        )
+        self._mineru_check.pack(anchor=tk.W)
+
+        self._mineru_token_frame = ttk.Frame(mineru_frame)
+        self._mineru_hint = ttk.Label(
+            self._mineru_token_frame,
+            text="免费获取：https://mineru.net/apiManage/token",
+            style="Muted.TLabel",
+        )
+        self._mineru_hint.pack(anchor=tk.W, pady=(4, 2))
+        token_row = ttk.Frame(self._mineru_token_frame)
+        token_row.pack(fill=tk.X)
+        self._mineru_key_hint = ttk.Label(token_row, text="未设置", style="Muted.TLabel")
+        self._mineru_key_hint.pack(side=tk.LEFT)
+        self._mineru_token_entry = ttk.Entry(
+            token_row, textvariable=self._mineru_token_var, show="*", width=34
+        )
+        self._mineru_token_entry.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+
+        self._load_mineru_token_state()
 
         footer = ttk.Frame(self._picker_frame)
         footer.pack(fill=tk.X, pady=(16, 0))
@@ -446,6 +481,7 @@ class ModelSwitchDialog(tk.Toplevel):
         profile = self._current_draft()
         new_key = self.api_key_var.get().strip() or None
         self.store = save_active_profile(self.store, profile, new_key)
+        self._save_mineru_token()
 
         if self.on_apply:
             self.on_apply(profile, self.store, new_key)
@@ -460,6 +496,47 @@ class ModelSwitchDialog(tk.Toplevel):
         self.result = None
         self._runner.shutdown()
         self.destroy()
+
+    # ------ MinerU Token helpers ------
+
+    def _load_mineru_token_state(self) -> None:
+        """Load existing MinerU token from keyring and update UI state."""
+        from agent_app.secrets import load_api_key, mask_api_key
+
+        stored = load_api_key(MINERU_KEYRING_KEY)
+        if stored:
+            self._mineru_enabled_var.set(True)
+            self._mineru_token_frame.pack(fill=tk.X, pady=(4, 0))
+            self._mineru_key_hint.configure(text=f"已保存: {mask_api_key(stored)}")
+        else:
+            self._mineru_enabled_var.set(False)
+            self._mineru_token_frame.pack_forget()
+
+    def _toggle_mineru_token(self) -> None:
+        """Show/hide the MinerU token input based on checkbox state."""
+        if self._mineru_enabled_var.get():
+            self._mineru_token_frame.pack(fill=tk.X, pady=(4, 0))
+        else:
+            self._mineru_token_frame.pack_forget()
+
+    def _save_mineru_token(self) -> None:
+        """Persist MinerU token to keyring if provided."""
+        from agent_app.secrets import delete_api_key, save_api_key
+
+        if not self._mineru_enabled_var.get():
+            delete_api_key(MINERU_KEYRING_KEY)
+            return
+
+        new_token = self._mineru_token_var.get().strip()
+        if new_token:
+            save_api_key(MINERU_KEYRING_KEY, new_token)
+
+
+def load_mineru_token() -> str | None:
+    """Load MinerU token from keyring (utility for use outside the dialog)."""
+    from agent_app.secrets import load_api_key
+
+    return load_api_key(MINERU_KEYRING_KEY)
 
 
 def show_model_switch_dialog(

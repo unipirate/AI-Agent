@@ -14,6 +14,7 @@ class Settings:
     llm_model: str
     llm_provider_id: str | None
     tavily_api_key: str | None
+    mineru_token: str | None
     allowed_root: Path
 
 
@@ -34,5 +35,6 @@ def load_settings() -> Settings:
         llm_model=model,
         llm_provider_id=None,
         tavily_api_key=os.getenv("TAVILY_API_KEY") or None,
+        mineru_token=os.getenv("MINERU_TOKEN") or None,
         allowed_root=Path(root).expanduser().resolve(),
     )

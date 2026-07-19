@@ -141,6 +141,42 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_pdf",
+            "description": (
+                "Extract text content from a PDF file in the sandbox using MinerU."
+                " Returns Markdown-formatted text including tables, formulas, and structure."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "PDF file path relative to sandbox root.",
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": ["auto", "flash", "precision"],
+                        "description": (
+                            "Extraction mode: auto (default, uses precision if token available),"
+                            " flash (fast, free, max 10MB/20 pages),"
+                            " precision (high accuracy, requires MINERU_TOKEN)."
+                        ),
+                        "default": "auto",
+                    },
+                    "pages": {
+                        "type": "string",
+                        "description": (
+                            "Page range to extract, e.g. '1-10'. Only for precision mode."
+                        ),
+                    },
+                },
+                "required": ["path"],
+            },
+        },
+    },
 ]
 
 # Anthropic uses a slightly different tool schema format
@@ -239,6 +275,37 @@ ANTHROPIC_TOOL_DEFINITIONS: list[dict[str, Any]] = [
                 },
             },
             "required": ["path", "content"],
+        },
+    },
+    {
+        "name": "read_pdf",
+        "description": (
+            "Extract text content from a PDF file in the sandbox using MinerU."
+            " Returns Markdown-formatted text including tables, formulas, and structure."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "PDF file path relative to sandbox root.",
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": ["auto", "flash", "precision"],
+                    "description": (
+                        "Extraction mode: auto (default, uses precision if token available),"
+                        " flash (fast, free, max 10MB/20 pages),"
+                        " precision (high accuracy, requires MINERU_TOKEN)."
+                    ),
+                    "default": "auto",
+                },
+                "pages": {
+                    "type": "string",
+                    "description": "Page range to extract, e.g. '1-10'. Only for precision mode.",
+                },
+            },
+            "required": ["path"],
         },
     },
 ]

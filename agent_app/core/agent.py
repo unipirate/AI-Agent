@@ -11,6 +11,7 @@ from agent_app.core.llm import LLMPlanner
 from agent_app.llm_profiles import LlmProfile, resolve_profile_llm
 from agent_app.models import AgentReply, Plan, ProposedAction, StreamChunk, StreamResult
 from agent_app.tools.file_tools import list_files, move_file, read_file, write_file
+from agent_app.tools.pdf_tools import read_pdf
 from agent_app.tools.web_tools import search_web
 
 logger = logging.getLogger(__name__)
@@ -148,6 +149,19 @@ class Agent:
                 tavily_api_key=self.settings.tavily_api_key,
                 query=query,
                 max_results=max_results,
+            )
+
+        if tool_name == "read_pdf":
+            path = str(args.get("path", ""))
+            mode = str(args.get("mode", "auto"))
+            pages = args.get("pages")
+            pages_str = str(pages) if pages else None
+            return read_pdf(
+                allowed_root=self.settings.allowed_root,
+                mineru_token=self.settings.mineru_token,
+                path=path,
+                mode=mode,
+                pages=pages_str,
             )
 
         logger.warning("Unknown tool requested: %s", tool_name)

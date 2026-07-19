@@ -7,9 +7,9 @@ from tkinter import messagebox, simpledialog, ttk
 from agent_app.conversation import SessionIndex, SessionMeta
 from agent_app.ui.theme import (
     COLOR_ACCENT,
-    COLOR_BG,
+    COLOR_HIGHLIGHT,
     COLOR_MUTED,
-    COLOR_SURFACE,
+    COLOR_SIDEBAR_BG,
     COLOR_TEXT,
 )
 
@@ -58,7 +58,7 @@ class SessionPanel(ttk.Frame):
 
         self._canvas = tk.Canvas(
             container,
-            bg=COLOR_BG,
+            bg=COLOR_SIDEBAR_BG,
             highlightthickness=0,
             width=200,
         )
@@ -93,7 +93,7 @@ class SessionPanel(ttk.Frame):
 
     def _create_session_item(self, meta: SessionMeta) -> None:
         is_active = meta.session_id == self._active_id
-        bg = COLOR_SURFACE if is_active else COLOR_BG
+        bg = COLOR_HIGHLIGHT if is_active else COLOR_SIDEBAR_BG
         fg = COLOR_ACCENT if is_active else COLOR_TEXT
 
         item_frame = tk.Frame(self._scrollable, bg=bg, cursor="hand2")

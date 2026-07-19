@@ -31,6 +31,7 @@ def settings() -> Settings:
         llm_model="test-model",
         llm_provider_id="",
         tavily_api_key="",
+        mineru_token=None,
         allowed_root=Path("/tmp/test-sandbox"),
     )
 
@@ -165,6 +166,7 @@ class TestOpenAICompatPlannerStream:
             llm_model="",
             llm_provider_id="",
             tavily_api_key="",
+            mineru_token=None,
             allowed_root=Path("/tmp"),
         )
         planner = OpenAICompatPlanner(settings)

@@ -253,6 +253,7 @@ def profile_to_settings(profile: LlmProfile, base: Settings | None = None) -> Se
         llm_model=profile.model,
         llm_provider_id=profile.provider_id,
         tavily_api_key=tavily,
+        mineru_token=base.mineru_token if base else os.getenv("MINERU_TOKEN") or None,
         allowed_root=allowed_root,
     )
 
